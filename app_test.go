@@ -1,9 +1,7 @@
-package app
+package yoshi
 
 import (
 	"testing"
-
-	"github.com/campbel/yoshi/opts"
 )
 
 type RootOptions struct {
@@ -27,13 +25,13 @@ func TestApp(t *testing.T) {
 	)
 
 	app := App(func(args []string) {
-		rootOpts = opts.MustParse[RootOptions](args)
+		rootOpts = MustParse[RootOptions](args)
 	})
 	app.Sub("some", func(args []string) {
-		someOpts = opts.MustParse[SomeOptions](args)
+		someOpts = MustParse[SomeOptions](args)
 	})
 	app.Sub("other", func(args []string) {
-		otherOpts = opts.MustParse[OtherOptions](args)
+		otherOpts = MustParse[OtherOptions](args)
 	})
 
 	app.Parse([]string{"-v", "some", "-n", "foo"})
