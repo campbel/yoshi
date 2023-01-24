@@ -27,15 +27,14 @@ func (n *Command) Start() {
 }
 
 func (n *Command) Parse(args []string) {
+	if n == nil {
+		return
+	}
 	sub, i := getFirstSub(n.subs, args)
-	if i == -1 || sub == nil {
-		if len(n.Run) > 0 {
-			n.Run[0](args)
-		}
-	} else {
-		if len(n.Run) > 0 {
-			n.Run[0](args[:i])
-		}
+	for _, fn := range n.Run {
+		fn(args[:i])
+	}
+	if sub != nil {
 		sub.Parse(args[i+1:])
 	}
 }
@@ -48,5 +47,5 @@ func getFirstSub(subs []*Command, args []string) (*Command, int) {
 			}
 		}
 	}
-	return nil, -1
+	return nil, len(args)
 }

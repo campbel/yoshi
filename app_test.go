@@ -4,49 +4,93 @@ import (
 	"testing"
 )
 
-type RootOptions struct {
-	Verbose bool   `opts:"-v,--verbose"`
-	Output  string `opts:"-o,--output"`
-}
-
-type SomeOptions struct {
-	Name string `opts:"-n,--name"`
-}
-
-type OtherOptions struct {
-	Port int `opts:"-p,--port"`
-}
-
 func TestApp(t *testing.T) {
-	var (
-		rootOpts  RootOptions
-		someOpts  SomeOptions
-		otherOpts OtherOptions
-	)
 
-	app := App(func(args []string) {
-		rootOpts = MustParse[RootOptions](args)
-	})
-	app.Sub("some", func(args []string) {
-		someOpts = MustParse[SomeOptions](args)
-	})
-	app.Sub("other", func(args []string) {
-		otherOpts = MustParse[OtherOptions](args)
-	})
+	tt := []struct {
+		name      string
+		args      []string
+		rootArgs  []string
+		someArgs  []string
+		otherArgs []string
+	}{
+		{
+			name:      "no args",
+			args:      []string{},
+			rootArgs:  []string{},
+			someArgs:  []string{},
+			otherArgs: []string{},
+		},
+		{
+			name:      "root args",
+			args:      []string{"-v"},
+			rootArgs:  []string{"-v"},
+			someArgs:  []string{},
+			otherArgs: []string{},
+		},
+		{
+			name:      "some args",
+			args:      []string{"some", "-n", "foo"},
+			rootArgs:  []string{},
+			someArgs:  []string{"-n", "foo"},
+			otherArgs: []string{},
+		},
+		{
+			name:      "other args",
+			args:      []string{"other", "-n", "foo"},
+			rootArgs:  []string{},
+			someArgs:  []string{},
+			otherArgs: []string{"-n", "foo"},
+		},
+		{
+			name:      "root and some args",
+			args:      []string{"-v", "some", "-n", "foo"},
+			rootArgs:  []string{"-v"},
+			someArgs:  []string{"-n", "foo"},
+			otherArgs: []string{},
+		},
+		{
+			name:      "root and other args",
+			args:      []string{"-v", "other", "-n", "foo"},
+			rootArgs:  []string{"-v"},
+			someArgs:  []string{},
+			otherArgs: []string{"-n", "foo"},
+		},
+		{
+			name:      "some and other args",
+			args:      []string{"some", "-n", "foo", "other", "-n", "bar"},
+			rootArgs:  []string{},
+			someArgs:  []string{"-n", "foo", "other", "-n", "bar"},
+			otherArgs: []string{},
+		},
+	}
 
-	app.Parse([]string{"-v", "some", "-n", "foo"})
-	if !rootOpts.Verbose {
-		t.Error("rootOpts.Verbose should be true")
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			var rootArgs, someArgs, otherArgs []string
+			app := App(func(args []string) {
+				rootArgs = args
+			})
+			app.Sub("some", func(args []string) {
+				someArgs = args
+			})
+			app.Sub("other", func(args []string) {
+				otherArgs = args
+			})
+			app.Parse(tc.args)
+			equal(t, rootArgs, tc.rootArgs)
+			equal(t, someArgs, tc.someArgs)
+			equal(t, otherArgs, tc.otherArgs)
+		})
 	}
-	if someOpts.Name != "foo" {
-		t.Error("someOpts.Name should be foo")
-	}
-	if otherOpts.Port != 0 {
-		t.Error("otherOpts.Port should be 0")
-	}
+}
 
-	app.Parse([]string{"other", "-p", "8080"})
-	if otherOpts.Port != 8080 {
-		t.Error("otherOpts.Port should be 8080")
+func equal(t *testing.T, a1, a2 []string) {
+	if len(a1) != len(a2) {
+		t.Errorf("got %v, want %v", a1, a2)
+	}
+	for i := range a1 {
+		if a1[i] != a2[i] {
+			t.Errorf("got %v, want %v", a1, a2)
+		}
 	}
 }
