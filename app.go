@@ -1,7 +1,6 @@
 package yoshi
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -28,7 +27,6 @@ func (n *Command) Start() {
 }
 
 func (n *Command) Parse(args []string) {
-	fmt.Println(n.Name, args)
 	if len(args) == 0 {
 		return
 	}
