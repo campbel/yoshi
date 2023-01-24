@@ -6,15 +6,15 @@ import (
 
 type Command struct {
 	Name string
-	Run  []func([]string)
+	Run  []Runner
 	subs []*Command
 }
 
-func App(run ...func([]string)) *Command {
+func App(run ...Runner) *Command {
 	return &Command{Name: "root", Run: run}
 }
 
-func (n *Command) Sub(name string, fn ...func([]string)) *Command {
+func (n *Command) Sub(name string, fn ...Runner) *Command {
 	n.subs = append(n.subs, &Command{
 		Name: name,
 		Run:  fn,
@@ -31,8 +31,8 @@ func (n *Command) Parse(args []string) {
 		return
 	}
 	sub, i := getFirstSub(n.subs, args)
-	for _, fn := range n.Run {
-		fn(args[:i])
+	for _, runner := range n.Run {
+		runner.Run(args[:i])
 	}
 	if sub != nil {
 		sub.Parse(args[i+1:])
@@ -48,4 +48,28 @@ func getFirstSub(subs []*Command, args []string) (*Command, int) {
 		}
 	}
 	return nil, len(args)
+}
+
+type Runner interface {
+	Run([]string)
+}
+
+type RunMulti struct {
+	fns []RunnerFunc
+}
+
+func (r RunMulti) Run(args []string) {
+	for _, fn := range r.fns {
+		fn.Run(args)
+	}
+}
+
+func Run(fns ...RunnerFunc) RunMulti {
+	return RunMulti{fns}
+}
+
+type RunnerFunc func([]string)
+
+func (r RunnerFunc) Run(args []string) {
+	r(args)
 }

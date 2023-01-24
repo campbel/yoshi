@@ -67,15 +67,15 @@ func TestApp(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			var rootArgs, someArgs, otherArgs []string
-			app := App(func(args []string) {
+			app := App(Run(func(args []string) {
 				rootArgs = args
-			})
-			app.Sub("some", func(args []string) {
+			}))
+			app.Sub("some", Run(func(args []string) {
 				someArgs = args
-			})
-			app.Sub("other", func(args []string) {
+			}))
+			app.Sub("other", Run(func(args []string) {
 				otherArgs = args
-			})
+			}))
 			app.Parse(tc.args)
 			equal(t, rootArgs, tc.rootArgs)
 			equal(t, someArgs, tc.someArgs)

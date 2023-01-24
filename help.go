@@ -11,9 +11,34 @@ import (
 
 var positionalRegex = regexp.MustCompile(`\[([0-9]+)\]`)
 
-func Help[T any](err ...error) string {
+func Help[T any](subs ...string) string {
+	return HelpE[T](nil, subs...)
+}
+
+func HelpE[T any](err error, cmds ...string) string {
+	output := ""
+	// error first
+	if err != nil {
+		output += "Error: " + err.Error() + "\n"
+	}
+	// then commands
+	if len(cmds) > 0 {
+		output := "Commands:\n"
+		for _, cmd := range cmds {
+			output += fmt.Sprintf("  %s", cmd)
+		}
+	}
+	// then options
+	output += optionsText[T]()
+	return output
+}
+
+func optionsText[T any]() string {
 	var t T
 	fields := reflect.VisibleFields(reflect.TypeOf(t))
+	if fields == nil {
+		return ""
+	}
 	var buffer bytes.Buffer
 	w := tabwriter.NewWriter(&buffer, 0, 0, 1, ' ', 0)
 	for _, field := range fields {
@@ -34,12 +59,5 @@ func Help[T any](err ...error) string {
 		fmt.Fprintf(w, "  %s\t%s\t%s %s\n", strings.Join(vals, ", "), field.Type.String(), description, def)
 	}
 	w.Flush()
-	output := ""
-	if len(err) > 0 {
-		output += "Error: " + err[0].Error() + "\n\n"
-	}
-	output += "\n"
-	output += "Options:\n"
-	output += buffer.String()
-	return output
+	return "Options:\n" + buffer.String()
 }

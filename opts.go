@@ -29,7 +29,7 @@ func MustParse[T any](args []string) T {
 	}
 	t, err := Parse[T](args)
 	if err != nil {
-		fmt.Println(Help[T](err))
+		fmt.Println(HelpE[T](err))
 		os.Exit(1)
 	}
 	return t
