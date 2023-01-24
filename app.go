@@ -27,9 +27,6 @@ func (n *Command) Start() {
 }
 
 func (n *Command) Parse(args []string) {
-	if len(args) == 0 {
-		return
-	}
 	sub, i := getFirstSub(n.subs, args)
 	if i == -1 || sub == nil {
 		if len(n.Run) > 0 {
