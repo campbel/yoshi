@@ -13,7 +13,6 @@ var positionalRegex = regexp.MustCompile(`\[([0-9]+)\]`)
 
 func Help[T any](err ...error) string {
 	var t T
-	positionals := []string{}
 	fields := reflect.VisibleFields(reflect.TypeOf(t))
 	var buffer bytes.Buffer
 	w := tabwriter.NewWriter(&buffer, 0, 0, 1, ' ', 0)
@@ -25,7 +24,6 @@ func Help[T any](err ...error) string {
 		description := field.Tag.Get("desc")
 		vals := strings.Split(tag, ",")
 		if positionalRegex.MatchString(vals[0]) {
-			positionals = append(positionals, strings.ToUpper(field.Name))
 			continue
 		}
 		def := field.Tag.Get("default")
