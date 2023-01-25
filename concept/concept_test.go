@@ -49,7 +49,7 @@ func TestConcept(t *testing.T) {
 	}
 
 	args := "--verbose true "
-	args += "client --name bob --insecure true --count 1 "
+	args += "client --name bob --insecure --count 1 "
 	args += "--list 1,2,3 --int-list 1,2,3 --bool-list true,false,true "
 	args += "--dict a=d,b=e,c=f --int-dict a=1,b=2,c=3 --bool-dict a=true,b=false,c=true"
 	Run("tt", app, strings.Split(args, " ")...)
@@ -60,5 +60,5 @@ func TestConcept(t *testing.T) {
 
 func TestHelp(t *testing.T) {
 	app := new(NuApp)
-	Run("tt", app, strings.Split("client --insecure face", " ")...)
+	Run("tt", app, "--help")
 }

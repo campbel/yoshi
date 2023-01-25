@@ -8,8 +8,11 @@ import (
 	"text/tabwriter"
 )
 
-func help(command reflect.Type, commands ...string) string {
+func help(command reflect.Type, err error, commands ...string) string {
 	output := ""
+	if err != nil {
+		output += "Error: " + err.Error() + "\n"
+	}
 	// commands
 	if len(commands) > 0 {
 		output += "Usage:"

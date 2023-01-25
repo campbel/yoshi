@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func Eval(t any) {
+func eval(t any) {
 	val := reflect.ValueOf(t)
 	fields := reflect.VisibleFields(val.Elem().Type())
 	for _, field := range fields {

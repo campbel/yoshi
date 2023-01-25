@@ -1,18 +1,24 @@
 package concept
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
 )
 
 func Run(name string, app any, args ...string) {
-	Eval(app)
+	eval(app)
 	ctx := &context{}
 	if err := ctx.parseCommand(reflect.ValueOf(app), args); err != nil {
-		helpMessage := help(ctx.currentCommand, append([]string{name}, ctx.commandList...)...)
-		fmt.Print(helpMessage)
+		if err.Error() == "help" {
+			fmt.Print(help(ctx.currentCommand, nil, append([]string{name}, ctx.commandList...)...))
+			os.Exit(0)
+		}
+		fmt.Print(help(ctx.currentCommand, err, append([]string{name}, ctx.commandList...)...))
+		os.Exit(1)
 	}
 }
 
@@ -48,12 +54,16 @@ func (ctx *context) parseCommand(command reflect.Value, args []string) error {
 	if hasRun {
 		runFunc := command.Elem().FieldByName("Run")
 		if !runFunc.IsNil() {
+			var retVal []reflect.Value
 			if hasOpt {
-				runFunc.Call([]reflect.Value{
+				retVal = runFunc.Call([]reflect.Value{
 					command.Elem().FieldByName("Options"),
 				})
 			} else {
-				runFunc.Call([]reflect.Value{})
+				retVal = runFunc.Call([]reflect.Value{})
+			}
+			if len(retVal) > 0 && retVal[0].Interface() != nil {
+				return retVal[0].Interface().(error)
 			}
 		}
 	}
@@ -65,21 +75,33 @@ func (ctx *context) parseCommand(command reflect.Value, args []string) error {
 }
 
 func parseOptions(options reflect.Value, args []string) error {
-	flagMap := flagMap(args)
+	// If help, return with help error
+	for _, arg := range args {
+		if arg == "--help" {
+			return errors.New("help")
+		}
+	}
+	flagToFieldMap := make(map[string]reflect.StructField)
 	fields := reflect.VisibleFields(options.Elem().Type())
 	for _, field := range fields {
 		flags := strings.Split(field.Tag.Get("yoshi-flag"), ",")
 		if len(flags) == 0 {
 			continue
 		}
-		var value string
 		for _, flag := range flags {
-			if value = flagMap[flag]; value != "" {
-				break
-			}
+			flagToFieldMap[flag] = field
 		}
-		if value == "" {
-			continue
+	}
+
+	for i := 0; i < len(args); i += 2 {
+		arg := args[i]
+		field, ok := flagToFieldMap[arg]
+		if !ok {
+			return fmt.Errorf("unknown flag: %s", arg)
+		}
+		var value string
+		if len(args) > i+1 {
+			value = args[i+1]
 		}
 		prop := options.Elem().FieldByName(field.Name)
 		switch prop.Kind() {
@@ -94,9 +116,11 @@ func parseOptions(options reflect.Value, args []string) error {
 		case reflect.Bool:
 			b, err := strconv.ParseBool(value)
 			if err != nil {
-				return err
+				prop.SetBool(true)
+				i--
+			} else {
+				prop.SetBool(b)
 			}
-			prop.SetBool(b)
 		case reflect.Slice:
 			prop.Set(reflect.MakeSlice(prop.Type(), 0, 0))
 			for _, v := range strings.Split(value, ",") {
@@ -138,26 +162,6 @@ func parseOptions(options reflect.Value, args []string) error {
 					prop.SetMapIndex(reflect.ValueOf(p2[0]), reflect.ValueOf(b))
 				}
 			}
-		}
-	}
-	return nil
-}
-
-func flagMap(args []string) map[string]string {
-	flags := map[string]string{}
-	for i := 0; i < len(args); i += 2 {
-		flags[args[i]] = args[i+1]
-	}
-	return flags
-}
-
-func parseTag(typ, tag string) []string {
-	parts := strings.Split(tag, ";")
-	for _, setting := range parts {
-		p2 := strings.Split(setting, "=")
-		key := p2[0]
-		if key == typ {
-			return strings.Split(p2[1], ",")
 		}
 	}
 	return nil

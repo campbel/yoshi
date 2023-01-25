@@ -21,7 +21,7 @@ type T struct {
 
 func TestSetDefaults(t *testing.T) {
 	var tt T
-	Eval(&tt)
+	eval(&tt)
 	if tt.A != "foo" {
 		t.Errorf("expected tt.A to be foo, got %s", tt.A)
 	}
