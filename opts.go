@@ -44,7 +44,7 @@ func Parse[T any](args []string) (T, error) {
 			}
 			fieldName, ok = flags[fmt.Sprintf("[%d]", posIndex)]
 			if !ok {
-				return t, errors.New("missing positional argument " + fmt.Sprintf("%d", posIndex))
+				return t, errors.New("extra positional argument " + args[i])
 			}
 			fieldValue = args[i]
 			isPositional = true
