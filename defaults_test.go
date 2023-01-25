@@ -6,22 +6,22 @@ import (
 )
 
 type T struct {
-	A   string `default:"foo"`
+	A   string `yoshi-def:"foo"`
 	B   string
-	C   int               `default:"42"`
-	D   int64             `default:"42"`
-	E   bool              `default:"true"`
-	F   []string          `default:"foo,bar,baz"`
-	FF  []bool            `default:"true,false,true"`
-	FFF []int             `default:"1,2,3"`
-	G   map[string]string `default:"foo=bar,bar=qux"`
-	GG  map[string]int    `default:"foo=1,bar=2"`
-	GGG map[string]bool   `default:"foo=true,bar=false"`
+	C   int               `yoshi-def:"42"`
+	D   int64             `yoshi-def:"42"`
+	E   bool              `yoshi-def:"true"`
+	F   []string          `yoshi-def:"foo,bar,baz"`
+	FF  []bool            `yoshi-def:"true,false,true"`
+	FFF []int             `yoshi-def:"1,2,3"`
+	G   map[string]string `yoshi-def:"foo=bar,bar=qux"`
+	GG  map[string]int    `yoshi-def:"foo=1,bar=2"`
+	GGG map[string]bool   `yoshi-def:"foo=true,bar=false"`
 }
 
 func TestSetDefaults(t *testing.T) {
-
-	tt := WithDefaults[T]()
+	var tt T
+	eval(&tt)
 	if tt.A != "foo" {
 		t.Errorf("expected tt.A to be foo, got %s", tt.A)
 	}
@@ -54,14 +54,5 @@ func TestSetDefaults(t *testing.T) {
 	}
 	if !reflect.DeepEqual(tt.GGG, map[string]bool{"foo": true, "bar": false}) {
 		t.Errorf("expected tt.GGG to be {foo: true, bar: false}, got %v", tt.GGG)
-	}
-}
-
-func TestBadStuff(t *testing.T) {
-	if WithDefaults[map[string]string]() != nil {
-		t.Errorf("expected WithDefaults[map[string]string] to be nil")
-	}
-	if WithDefaults[*T]() != nil {
-		t.Errorf("expected WithDefaults[*T] to be nil")
 	}
 }

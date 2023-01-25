@@ -6,18 +6,14 @@ import (
 	"strings"
 )
 
-func WithDefaults[T any]() T {
-	var t T
-	if reflect.ValueOf(t).Kind() != reflect.Struct {
-		return t
-	}
-	fields := reflect.VisibleFields(reflect.TypeOf(t))
+func eval(t any) {
+	val := reflect.ValueOf(t)
+	fields := reflect.VisibleFields(val.Elem().Type())
 	for _, field := range fields {
-		tag := field.Tag.Get("default")
+		tag := field.Tag.Get("yoshi-def")
 		if tag == "" {
 			continue
 		}
-		val := reflect.ValueOf(&t)
 		field := val.Elem().FieldByName(field.Name)
 		switch field.Kind() {
 		case reflect.String:
@@ -72,5 +68,4 @@ func WithDefaults[T any]() T {
 
 		}
 	}
-	return t
 }

@@ -4,86 +4,42 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
-	"regexp"
 	"strings"
 	"text/tabwriter"
 )
 
-var positionalRegex = regexp.MustCompile(`\[([0-9]+)\]`)
-
-func Help[T any](cmds ...string) string {
-	return HelpE[T](nil, cmds...)
-}
-
-func HelpE[T any](err error, cmds ...string) string {
+func help(command reflect.Type, err error, commands ...string) string {
 	output := ""
-	// error first
 	if err != nil {
 		output += "Error: " + err.Error() + "\n"
 	}
-	// then commands
-	if len(cmds) > 0 {
-		output += "Commands:\n"
-		for _, cmd := range cmds {
-			output += fmt.Sprintf("  %s\n", cmd)
+	// commands
+	if len(commands) > 0 {
+		output += "Usage:"
+		for _, cmd := range commands {
+			output += " " + strings.ToLower(cmd)
+		}
+		output += " [options]\n"
+	}
+	// options
+	field, ok := command.FieldByName("Options")
+	if ok {
+		fields := reflect.VisibleFields(field.Type)
+		if len(fields) > 0 {
+			output += "Options:"
+			var buffer bytes.Buffer
+			w := tabwriter.NewWriter(&buffer, 0, 0, 1, ' ', 0)
+			for _, field := range fields {
+				defaultValue := field.Tag.Get("yoshi-default")
+				if defaultValue != "" {
+					defaultValue = fmt.Sprintf(" (default: %s)", defaultValue)
+				}
+				fmt.Fprintf(w, "\n\t%s\t%s\t%s", field.Tag.Get("yoshi-flag"), field.Type.String(), field.Tag.Get("yoshi-desc")+defaultValue)
+			}
+			w.Flush()
+			output += buffer.String() + "\n"
 		}
 	}
-	// then arguments
-	output += argumentsText[T]()
-	// then options
-	output += optionsText[T]()
+
 	return output
-}
-
-func argumentsText[T any]() string {
-	var t T
-	fields := reflect.VisibleFields(reflect.TypeOf(t))
-	if fields == nil {
-		return ""
-	}
-	var buffer bytes.Buffer
-	w := tabwriter.NewWriter(&buffer, 0, 0, 1, ' ', 0)
-	for _, field := range fields {
-		tag := field.Tag.Get("opts")
-		if positionalRegex.MatchString(tag) {
-			fmt.Fprintf(w, "\n  %s\t%s\t%s", tag, field.Name, field.Type.String())
-		}
-	}
-	w.Flush()
-	if buffer.Len() == 0 {
-		return ""
-	}
-	return "Arguments:" + buffer.String() + "\n"
-}
-
-func optionsText[T any]() string {
-	var t T
-	fields := reflect.VisibleFields(reflect.TypeOf(t))
-	if fields == nil {
-		return ""
-	}
-	var buffer bytes.Buffer
-	w := tabwriter.NewWriter(&buffer, 0, 0, 1, ' ', 0)
-	for _, field := range fields {
-		tag := field.Tag.Get("opts")
-		if tag == "" {
-			continue
-		}
-		description := field.Tag.Get("desc")
-		vals := strings.Split(tag, ",")
-		if positionalRegex.MatchString(vals[0]) {
-			continue
-		}
-		def := field.Tag.Get("default")
-		if def != "" {
-			def = "(default " + def + ")"
-		}
-
-		fmt.Fprintf(w, "\n  %s\t%s\t%s %s", strings.Join(vals, ", "), field.Type.String(), description, def)
-	}
-	w.Flush()
-	if buffer.Len() == 0 {
-		return ""
-	}
-	return "Options:" + buffer.String() + "\n"
 }
