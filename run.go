@@ -9,7 +9,11 @@ import (
 	"strings"
 )
 
-func Run(name string, app any, args ...string) {
+func Run(name string, app any) {
+	run(name, app, os.Args[1:]...)
+}
+
+func run(name string, app any, args ...string) {
 	eval(app)
 	ctx := &context{}
 	if err := ctx.parseCommand(reflect.ValueOf(app), args); err != nil {
