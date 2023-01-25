@@ -28,9 +28,30 @@ func HelpE[T any](err error, cmds ...string) string {
 			output += fmt.Sprintf("  %s\n", cmd)
 		}
 	}
+	// then arguments
+	output += argumentsText[T]() + "\n"
 	// then options
 	output += optionsText[T]()
 	return output
+}
+
+func argumentsText[T any]() string {
+	var t T
+	fields := reflect.VisibleFields(reflect.TypeOf(t))
+	if fields == nil {
+		return ""
+	}
+	var buffer bytes.Buffer
+	w := tabwriter.NewWriter(&buffer, 0, 0, 1, ' ', 0)
+	for _, field := range fields {
+		tag := field.Tag.Get("opts")
+		if positionalRegex.MatchString(tag) {
+			fmt.Fprintf(w, "\n  %s\t%s\t%s", tag, field.Name, field.Type.String())
+		}
+	}
+
+	w.Flush()
+	return "Arguments:" + buffer.String()
 }
 
 func optionsText[T any]() string {
