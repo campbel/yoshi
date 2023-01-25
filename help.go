@@ -46,7 +46,7 @@ func help(command reflect.Type, err error, usage ...string) string {
 			var buffer bytes.Buffer
 			w := tabwriter.NewWriter(&buffer, 0, 0, 1, ' ', 0)
 			for _, field := range fields {
-				defaultValue := field.Tag.Get("yoshi-default")
+				defaultValue := field.Tag.Get("yoshi-def")
 				if defaultValue != "" {
 					defaultValue = fmt.Sprintf(" (default: %s)", defaultValue)
 				}

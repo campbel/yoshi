@@ -22,13 +22,13 @@ type NuApp struct {
 type ClientOptions struct {
 	Name     string            `yoshi-flag:"-n,--name"      yoshi-desc:"name of client"`
 	Insecure bool              `yoshi-flag:"-k,--insecure"  yoshi-desc:"insecure connection"`
-	Count    int               `yoshi-flag:"-c,--count"     yoshi-desc:"number of times to run" yoshi-default:"1"`
+	Count    int               `yoshi-flag:"-c,--count"     yoshi-desc:"number of times to run" yoshi-def:"1"`
 	ListStr  []string          `yoshi-flag:"-l,--list"      yoshi-desc:"list of strings"`
-	ListInt  []int             `yoshi-flag:"-i,--int-list"  yoshi-desc:"list of ints"           yoshi-default:"1,2,3"`
+	ListInt  []int             `yoshi-flag:"-i,--int-list"  yoshi-desc:"list of ints"           yoshi-def:"1,2,3"`
 	ListBool []bool            `yoshi-flag:"-b,--bool-list" yoshi-desc:"list of bools"`
 	DictStr  map[string]string `yoshi-flag:"-d,--dict"      yoshi-desc:"dict of strings"`
 	DictInt  map[string]int    `yoshi-flag:"-e,--int-dict"  yoshi-desc:"dict of ints"`
-	DictBool map[string]bool   `yoshi-flag:"-f,--bool-dict" yoshi-desc:"dict of bools"          yoshi-default:"a=true,b=false,c=true"`
+	DictBool map[string]bool   `yoshi-flag:"-f,--bool-dict" yoshi-desc:"dict of bools"          yoshi-def:"a=true,b=false,c=true"`
 }
 
 type ServerOptions struct {
