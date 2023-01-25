@@ -11,8 +11,8 @@ import (
 
 var positionalRegex = regexp.MustCompile(`\[([0-9]+)\]`)
 
-func Help[T any](subs ...string) string {
-	return HelpE[T](nil, subs...)
+func Help[T any](cmds ...string) string {
+	return HelpE[T](nil, cmds...)
 }
 
 func HelpE[T any](err error, cmds ...string) string {
@@ -23,9 +23,9 @@ func HelpE[T any](err error, cmds ...string) string {
 	}
 	// then commands
 	if len(cmds) > 0 {
-		output := "Commands:\n"
+		output += "Commands:\n"
 		for _, cmd := range cmds {
-			output += fmt.Sprintf("  %s", cmd)
+			output += fmt.Sprintf("  %s\n", cmd)
 		}
 	}
 	// then options
