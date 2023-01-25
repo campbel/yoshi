@@ -12,6 +12,7 @@ func TestApp(t *testing.T) {
 		rootArgs  []string
 		someArgs  []string
 		otherArgs []string
+		help      bool
 	}{
 		{
 			name:      "no args",
@@ -62,24 +63,39 @@ func TestApp(t *testing.T) {
 			someArgs:  []string{"-n", "foo", "other", "-n", "bar"},
 			otherArgs: []string{},
 		},
+		{
+			name:      "help",
+			args:      []string{"--help"},
+			rootArgs:  []string{"--help"},
+			someArgs:  []string{},
+			otherArgs: []string{},
+			help:      true,
+		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			var rootArgs, someArgs, otherArgs []string
-			app := App(Run(func(args []string) {
+			var help bool
+			app := App(Run(func(args Args) {
 				rootArgs = args
+				help = help || args.Help()
 			}))
-			app.Sub("some", Run(func(args []string) {
+			app.Sub("some", Run(func(args Args) {
 				someArgs = args
+				help = help || args.Help()
 			}))
-			app.Sub("other", Run(func(args []string) {
+			app.Sub("other", Run(func(args Args) {
 				otherArgs = args
+				help = help || args.Help()
 			}))
 			app.Parse(tc.args)
 			equal(t, rootArgs, tc.rootArgs)
 			equal(t, someArgs, tc.someArgs)
 			equal(t, otherArgs, tc.otherArgs)
+			if tc.help != help {
+				t.Errorf("got %v, want %v", help, tc.help)
+			}
 		})
 	}
 }

@@ -50,15 +50,26 @@ func getFirstSub(subs []*Command, args []string) (*Command, int) {
 	return nil, len(args)
 }
 
+type Args []string
+
+func (a Args) Help() bool {
+	for _, arg := range a {
+		if arg == "--help" {
+			return true
+		}
+	}
+	return false
+}
+
 type Runner interface {
-	Run([]string)
+	Run(Args)
 }
 
 type RunMulti struct {
 	fns []RunnerFunc
 }
 
-func (r RunMulti) Run(args []string) {
+func (r RunMulti) Run(args Args) {
 	for _, fn := range r.fns {
 		fn.Run(args)
 	}
@@ -68,7 +79,7 @@ func Run(fns ...RunnerFunc) RunMulti {
 	return RunMulti{fns}
 }
 
-type RunnerFunc func([]string)
+type RunnerFunc func(Args)
 
 func (r RunnerFunc) Run(args []string) {
 	r(args)
