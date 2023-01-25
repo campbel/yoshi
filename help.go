@@ -56,8 +56,8 @@ func optionsText[T any]() string {
 			def = "(default " + def + ")"
 		}
 
-		fmt.Fprintf(w, "  %s\t%s\t%s %s\n", strings.Join(vals, ", "), field.Type.String(), description, def)
+		fmt.Fprintf(w, "\n  %s\t%s\t%s %s", strings.Join(vals, ", "), field.Type.String(), description, def)
 	}
 	w.Flush()
-	return "Options:\n" + buffer.String()
+	return "Options:" + buffer.String()
 }
