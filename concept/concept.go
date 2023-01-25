@@ -1,17 +1,28 @@
 package concept
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
 )
 
-func Run(app any, args ...string) {
+func Run(name string, app any, args ...string) {
 	Eval(app)
-	parseCommand(reflect.ValueOf(app), args)
+	ctx := &context{}
+	if err := ctx.parseCommand(reflect.ValueOf(app), args); err != nil {
+		helpMessage := help(ctx.currentCommand, append([]string{name}, ctx.commandList...)...)
+		fmt.Print(helpMessage)
+	}
 }
 
-func parseCommand(command reflect.Value, args []string) {
+type context struct {
+	commandList    []string
+	currentCommand reflect.Type
+}
+
+func (ctx *context) parseCommand(command reflect.Value, args []string) error {
+	ctx.currentCommand = command.Elem().Type()
 	var (
 		hasRun = false
 		hasOpt = false
@@ -30,28 +41,34 @@ func parseCommand(command reflect.Value, args []string) {
 	}
 	cmd, i := firstSubCommand(cmds, args)
 	if hasOpt {
-		parseOptions(command.Elem().FieldByName("Options").Addr(), args[:i])
+		if err := parseOptions(command.Elem().FieldByName("Options").Addr(), args[:i]); err != nil {
+			return err
+		}
 	}
 	if hasRun {
 		runFunc := command.Elem().FieldByName("Run")
-		if hasOpt {
-			runFunc.Call([]reflect.Value{
-				command.Elem().FieldByName("Options"),
-			})
-		} else {
-			runFunc.Call([]reflect.Value{})
+		if !runFunc.IsNil() {
+			if hasOpt {
+				runFunc.Call([]reflect.Value{
+					command.Elem().FieldByName("Options"),
+				})
+			} else {
+				runFunc.Call([]reflect.Value{})
+			}
 		}
 	}
 	if cmd != "" {
-		parseCommand(command.Elem().FieldByName(cmd).Addr(), args[i+1:])
+		ctx.commandList = append(ctx.commandList, cmd)
+		return ctx.parseCommand(command.Elem().FieldByName(cmd).Addr(), args[i+1:])
 	}
+	return nil
 }
 
-func parseOptions(options reflect.Value, args []string) {
+func parseOptions(options reflect.Value, args []string) error {
 	flagMap := flagMap(args)
 	fields := reflect.VisibleFields(options.Elem().Type())
 	for _, field := range fields {
-		flags := parseTag("flag", field.Tag.Get("yoshi"))
+		flags := strings.Split(field.Tag.Get("yoshi-flag"), ",")
 		if len(flags) == 0 {
 			continue
 		}
@@ -69,10 +86,16 @@ func parseOptions(options reflect.Value, args []string) {
 		case reflect.String:
 			prop.SetString(value)
 		case reflect.Int:
-			i, _ := strconv.Atoi(value)
+			i, err := strconv.Atoi(value)
+			if err != nil {
+				return err
+			}
 			prop.SetInt(int64(i))
 		case reflect.Bool:
-			b, _ := strconv.ParseBool(value)
+			b, err := strconv.ParseBool(value)
+			if err != nil {
+				return err
+			}
 			prop.SetBool(b)
 		case reflect.Slice:
 			prop.Set(reflect.MakeSlice(prop.Type(), 0, 0))
@@ -81,10 +104,16 @@ func parseOptions(options reflect.Value, args []string) {
 				case reflect.String:
 					prop.Set(reflect.Append(prop, reflect.ValueOf(v)))
 				case reflect.Int:
-					i, _ := strconv.Atoi(v)
+					i, err := strconv.Atoi(v)
+					if err != nil {
+						return err
+					}
 					prop.Set(reflect.Append(prop, reflect.ValueOf(i)))
 				case reflect.Bool:
-					b, _ := strconv.ParseBool(v)
+					b, err := strconv.ParseBool(v)
+					if err != nil {
+						return err
+					}
 					prop.Set(reflect.Append(prop, reflect.ValueOf(b)))
 				}
 			}
@@ -96,15 +125,22 @@ func parseOptions(options reflect.Value, args []string) {
 				case reflect.String:
 					prop.SetMapIndex(reflect.ValueOf(p2[0]), reflect.ValueOf(p2[1]))
 				case reflect.Int:
-					i, _ := strconv.Atoi(p2[1])
+					i, err := strconv.Atoi(p2[1])
+					if err != nil {
+						return err
+					}
 					prop.SetMapIndex(reflect.ValueOf(p2[0]), reflect.ValueOf(i))
 				case reflect.Bool:
-					b, _ := strconv.ParseBool(p2[1])
+					b, err := strconv.ParseBool(p2[1])
+					if err != nil {
+						return err
+					}
 					prop.SetMapIndex(reflect.ValueOf(p2[0]), reflect.ValueOf(b))
 				}
 			}
 		}
 	}
+	return nil
 }
 
 func flagMap(args []string) map[string]string {

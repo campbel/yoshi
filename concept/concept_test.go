@@ -7,7 +7,7 @@ import (
 
 type NuApp struct {
 	Options struct {
-		Verbose bool `yoshi:"flag=-v,--verbose"`
+		Verbose bool `yoshi-flag:"-v,--verbose"`
 	}
 	Server struct {
 		Options ServerOptions
@@ -20,19 +20,19 @@ type NuApp struct {
 }
 
 type ClientOptions struct {
-	Name     string            `yoshi:"flag=-n,--name"`
-	Insecure bool              `yoshi:"flag=-k,--insecure"`
-	Count    int               `yoshi:"flag=-c,--count"`
-	ListStr  []string          `yoshi:"flag=-l,--list"`
-	ListInt  []int             `yoshi:"flag=-i,--int-list"`
-	ListBool []bool            `yoshi:"flag=-b,--bool-list"`
-	DictStr  map[string]string `yoshi:"flag=-d,--dict"`
-	DictInt  map[string]int    `yoshi:"flag=-e,--int-dict"`
-	DictBool map[string]bool   `yoshi:"flag=-f,--bool-dict"`
+	Name     string            `yoshi-flag:"-n,--name"      yoshi-desc:"name of client"`
+	Insecure bool              `yoshi-flag:"-k,--insecure"  yoshi-desc:"insecure connection"`
+	Count    int               `yoshi-flag:"-c,--count"     yoshi-desc:"number of times to run" yoshi-default:"1"`
+	ListStr  []string          `yoshi-flag:"-l,--list"      yoshi-desc:"list of strings"`
+	ListInt  []int             `yoshi-flag:"-i,--int-list"  yoshi-desc:"list of ints"           yoshi-default:"1,2,3"`
+	ListBool []bool            `yoshi-flag:"-b,--bool-list" yoshi-desc:"list of bools"`
+	DictStr  map[string]string `yoshi-flag:"-d,--dict"      yoshi-desc:"dict of strings"`
+	DictInt  map[string]int    `yoshi-flag:"-e,--int-dict"  yoshi-desc:"dict of ints"`
+	DictBool map[string]bool   `yoshi-flag:"-f,--bool-dict" yoshi-desc:"dict of bools"          yoshi-default:"a=true,b=false,c=true"`
 }
 
 type ServerOptions struct {
-	Port string `yoshi:"flag=-p,--port"`
+	Port string `yoshi-flag:"-p,--port"`
 }
 
 func TestConcept(t *testing.T) {
@@ -48,11 +48,17 @@ func TestConcept(t *testing.T) {
 		t.Fatal("server should not run")
 	}
 
-	args := "client --name bob --insecure true --count 1 "
+	args := "--verbose true "
+	args += "client --name bob --insecure true --count 1 "
 	args += "--list 1,2,3 --int-list 1,2,3 --bool-list true,false,true "
 	args += "--dict a=d,b=e,c=f --int-dict a=1,b=2,c=3 --bool-dict a=true,b=false,c=true"
-	Run(app, strings.Split(args, " ")...)
+	Run("tt", app, strings.Split(args, " ")...)
 	if count != 1 {
 		t.Error("count should be 2")
 	}
+}
+
+func TestHelp(t *testing.T) {
+	app := new(NuApp)
+	Run("tt", app, strings.Split("client --insecure face", " ")...)
 }
