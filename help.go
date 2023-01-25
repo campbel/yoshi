@@ -29,7 +29,7 @@ func HelpE[T any](err error, cmds ...string) string {
 		}
 	}
 	// then arguments
-	output += argumentsText[T]() + "\n"
+	output += argumentsText[T]()
 	// then options
 	output += optionsText[T]()
 	return output
@@ -49,9 +49,11 @@ func argumentsText[T any]() string {
 			fmt.Fprintf(w, "\n  %s\t%s\t%s", tag, field.Name, field.Type.String())
 		}
 	}
-
 	w.Flush()
-	return "Arguments:" + buffer.String()
+	if buffer.Len() == 0 {
+		return ""
+	}
+	return "Arguments:" + buffer.String() + "\n"
 }
 
 func optionsText[T any]() string {
@@ -80,5 +82,5 @@ func optionsText[T any]() string {
 		fmt.Fprintf(w, "\n  %s\t%s\t%s %s", strings.Join(vals, ", "), field.Type.String(), description, def)
 	}
 	w.Flush()
-	return "Options:" + buffer.String()
+	return "Options:" + buffer.String() + "\n"
 }

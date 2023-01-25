@@ -15,12 +15,12 @@ func ParseArgs[T any]() (T, error) {
 
 func MustParse[T any](args Args, cmds ...string) T {
 	if args.Help() {
-		fmt.Println(Help[T](cmds...))
+		fmt.Print(Help[T](cmds...))
 		os.Exit(0)
 	}
 	t, err := Parse[T](args)
 	if err != nil {
-		fmt.Println(HelpE[T](err, cmds...))
+		fmt.Print(HelpE[T](err, cmds...))
 		os.Exit(1)
 	}
 	return t
