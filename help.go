@@ -82,5 +82,8 @@ func optionsText[T any]() string {
 		fmt.Fprintf(w, "\n  %s\t%s\t%s %s", strings.Join(vals, ", "), field.Type.String(), description, def)
 	}
 	w.Flush()
+	if buffer.Len() == 0 {
+		return ""
+	}
 	return "Options:" + buffer.String() + "\n"
 }
