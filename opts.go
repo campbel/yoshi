@@ -13,23 +13,14 @@ func ParseArgs[T any]() (T, error) {
 	return Parse[T](os.Args[1:])
 }
 
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
-}
-
-func MustParse[T any](args []string) T {
-	if contains(args, "--help") {
-		fmt.Println(Help[T]())
+func MustParse[T any](args Args, cmds ...string) T {
+	if args.Help() {
+		fmt.Println(Help[T](cmds...))
 		os.Exit(0)
 	}
 	t, err := Parse[T](args)
 	if err != nil {
-		fmt.Println(HelpE[T](err))
+		fmt.Println(HelpE[T](err, cmds...))
 		os.Exit(1)
 	}
 	return t
