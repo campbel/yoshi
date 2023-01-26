@@ -7,14 +7,21 @@ import (
 )
 
 func eval(t any) {
-	val := reflect.ValueOf(t)
+	evalT(reflect.ValueOf(t))
+}
+
+func evalT(val reflect.Value) {
 	fields := reflect.VisibleFields(val.Elem().Type())
-	for _, field := range fields {
-		tag := field.Tag.Get("yoshi-def")
+	for _, structField := range fields {
+		field := val.Elem().FieldByName(structField.Name)
+		if field.Kind() == reflect.Struct {
+			evalT(field.Addr())
+			continue
+		}
+		tag := structField.Tag.Get("yoshi-def")
 		if tag == "" {
 			continue
 		}
-		field := val.Elem().FieldByName(field.Name)
 		switch field.Kind() {
 		case reflect.String:
 			field.SetString(tag)
@@ -65,7 +72,6 @@ func eval(t any) {
 					field.SetMapIndex(reflect.ValueOf(p[0]), reflect.ValueOf(v))
 				}
 			}
-
 		}
 	}
 }

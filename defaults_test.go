@@ -17,6 +17,11 @@ type T struct {
 	G   map[string]string `yoshi-def:"foo=bar,bar=qux"`
 	GG  map[string]int    `yoshi-def:"foo=1,bar=2"`
 	GGG map[string]bool   `yoshi-def:"foo=true,bar=false"`
+	H   struct {
+		A string `yoshi-def:"foo"`
+		B string
+		C int `yoshi-def:"42"`
+	}
 }
 
 func TestSetDefaults(t *testing.T) {
@@ -54,5 +59,14 @@ func TestSetDefaults(t *testing.T) {
 	}
 	if !reflect.DeepEqual(tt.GGG, map[string]bool{"foo": true, "bar": false}) {
 		t.Errorf("expected tt.GGG to be {foo: true, bar: false}, got %v", tt.GGG)
+	}
+	if tt.H.A != "foo" {
+		t.Errorf("expected tt.H.A to be foo, got %s", tt.H.A)
+	}
+	if tt.H.B != "" {
+		t.Errorf("expected tt.H.B to be empty, got %s", tt.H.B)
+	}
+	if tt.H.C != 42 {
+		t.Errorf("expected tt.H.C to be 42, got %d", tt.H.C)
 	}
 }
