@@ -50,6 +50,9 @@ func buildNodes(val reflect.Value) *Node {
 			}
 			node.Run = structField.Addr()
 		default:
+			if structField.Kind() != reflect.Struct {
+				continue
+			}
 			node.Commands[strings.ToLower(field.Name)] = buildNodes(structField.Addr())
 		}
 	}

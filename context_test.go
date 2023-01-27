@@ -1,20 +1,21 @@
 package yoshi
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestApp(t *testing.T) {
-	count := 0
-	ctx := Create[TestYoshiApp]()
-	if err := ctx.Validate(); err != nil {
+	ctx := Create[TestYoshiApp]("appy")
+	if err := ctx.Validate(); len(err) != 4 {
 		t.Error(err)
 	}
-	ctx.App.Call.Run = func() {
-		count++
-	}
+	helpText := ctx.help("call", "-n", "123", "message", "-t", "hello, world")
+	fmt.Print(helpText)
 	ctx.run("call", "-n", "123", "message", "-t", "hello, world")
 
-	if count != 1 {
-		t.Errorf("Expected 1, got %d", count)
+	if ctx.App.Call.callCount != 1 {
+		t.Errorf("Expected 1, got %d", ctx.App.Call.callCount)
 	}
 }
 
@@ -23,17 +24,7 @@ type TestYoshiApp struct {
 		Name    string `yoshi-flag:"-n"`
 		Address string `yoshi-flag:"-a"`
 	}
-	Call struct {
-		Options struct {
-			Number int `yoshi-flag:"-n" yoshi-def:"hello, world"`
-		}
-		Message struct {
-			Options struct {
-				Text string `yoshi-flag:"-t"`
-			}
-		}
-		Run func()
-	}
+	Call  CallCommand
 	Email struct {
 		Options struct {
 			Address string `yoshi-flag:"-a"`
@@ -44,4 +35,22 @@ type TestYoshiApp struct {
 			Number string `yoshi-flag:"-n"`
 		}
 	}
+}
+
+type CallCommand struct {
+	callCount int
+	Options   CallOptions
+	Message   struct {
+		Options struct {
+			Text string `yoshi-flag:"-t" yoshi-desc:"The text to send"`
+		}
+	}
+}
+
+func (c *CallCommand) Run(options CallOptions) {
+	c.callCount++
+}
+
+type CallOptions struct {
+	Number int `yoshi-flag:"-n" yoshi-desc:"The number to call"`
 }

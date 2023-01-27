@@ -2,40 +2,13 @@ package yoshi
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
 )
 
-func eval(t any) error {
-	return evalT(reflect.ValueOf(t))
-}
-
-func evalT(val reflect.Value) error {
-	fields := reflect.VisibleFields(val.Elem().Type())
-	for _, structField := range fields {
-		field := val.Elem().FieldByName(structField.Name)
-		if field.Kind() == reflect.Struct {
-			evalT(field.Addr())
-			continue
-		}
-		tag := structField.Tag.Get(TagDefault)
-		if tag == "" {
-			continue
-		}
-		parser, ok := setterMap[field.Kind()]
-		if !ok {
-			return fmt.Errorf("invalid type %s", field.Kind().String())
-		}
-		err := parser(field, tag)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
+// setterMap standardizes setting values from strings.
+// its important to have the same behavior for validation and execution.
 var setterMap = map[reflect.Kind]func(reflect.Value, string) error{
 	reflect.String: func(val reflect.Value, s string) error {
 		val.SetString(s)
