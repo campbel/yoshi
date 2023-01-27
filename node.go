@@ -53,18 +53,18 @@ func buildNodes(name string, val reflect.Value) *cmdNode {
 		structField := val.Elem().FieldByName(field.Name)
 		switch field.Name {
 		case "Options":
-			node.options = buildNodeOptions(structField.Addr())
-			node.optionsReference = structField.Addr()
+			if structField.Kind() == reflect.Struct {
+				node.options = buildNodeOptions(structField.Addr())
+				node.optionsReference = structField.Addr()
+			}
 		case "Run":
-			if structField.Kind() != reflect.Func {
-				panic(fmt.Errorf("invalid type %s for Run", structField.Kind().String()))
+			if structField.Kind() == reflect.Func {
+				node.runReference = structField.Addr()
 			}
-			node.runReference = structField.Addr()
 		default:
-			if structField.Kind() != reflect.Struct {
-				continue
+			if structField.Kind() == reflect.Struct {
+				node.commands = append(node.commands, buildNodes(strings.ToLower(field.Name), structField.Addr()))
 			}
-			node.commands = append(node.commands, buildNodes(strings.ToLower(field.Name), structField.Addr()))
 		}
 	}
 	return &node
