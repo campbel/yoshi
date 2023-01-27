@@ -9,7 +9,7 @@ import (
 type Context[T any] struct {
 	App  *T
 	name string
-	root *Node
+	root *cmdNode
 }
 
 func Create[T any](name string) *Context[T] {
@@ -17,7 +17,7 @@ func Create[T any](name string) *Context[T] {
 	return &Context[T]{
 		App:  &t,
 		name: name,
-		root: buildNodes(reflect.ValueOf(&t)),
+		root: buildNodes(name, reflect.ValueOf(&t)),
 	}
 }
 

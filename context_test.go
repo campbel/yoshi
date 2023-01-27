@@ -1,7 +1,6 @@
 package yoshi
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,13 +12,7 @@ func TestApp(t *testing.T) {
 	if err := ctx.Validate(); len(err) != 4 {
 		t.Error(err)
 	}
-	helpText := ctx.help("call", "-n", "123", "message", "-t", "hello, world")
-	fmt.Println(helpText)
-	expectedText := `Usage: appy call [options]
-Options:
-  -t string The text to send
-`
-	assert.Equal(expectedText, helpText)
+	assert.Equal("Usage: appy call message [options]\nOptions:\n  -t string The text to send\n", ctx.help("call", "-n", "123", "message", "-t", "hello, world"))
 	ctx.run("call", "-n", "123", "message", "-t", "hello, world")
 
 	if ctx.App.Call.callCount != 1 {

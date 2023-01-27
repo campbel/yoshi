@@ -35,15 +35,15 @@ func (l *link) help(usage ...string) string {
 	return l.next.help(append(usage, l.name)...)
 }
 
-func buildLinks(name string, node *Node, args args) *link {
+func buildLinks(name string, node *cmdNode, args args) *link {
 	link := new(link)
 	link.name = name
-	link.self = node.Value
-	link.run = node.Run
-	link.options = node.Opts
+	link.self = node.cmdReference
+	link.run = node.runReference
+	link.options = node.optionsReference
 	for i, arg := range args {
 		if arg.command != "" {
-			command, ok := node.Commands[arg.command]
+			command, ok := node.commands[arg.command]
 			if !ok {
 				link.error = fmt.Errorf("unknown command %s", arg.command)
 				return link
@@ -52,18 +52,18 @@ func buildLinks(name string, node *Node, args args) *link {
 			return link
 		}
 		if arg.flag != "" {
-			for _, option := range node.Options {
-				for _, flag := range option.Flags {
+			for _, option := range node.options {
+				for _, flag := range option.flags {
 					if flag == arg.flag {
 						if arg.value == "" {
-							arg.value = option.Default
+							arg.value = option.def
 						}
-						setter, ok := setterMap[option.Type.Kind()]
+						setter, ok := setterMap[option.typ.Kind()]
 						if !ok {
-							link.error = fmt.Errorf("invalid type %s", option.Type.Kind().String())
+							link.error = fmt.Errorf("invalid type %s", option.typ.Kind().String())
 							return link
 						}
-						err := setter(option.Value, arg.value)
+						err := setter(option.val, arg.value)
 						if err != nil {
 							link.error = err
 							return link
