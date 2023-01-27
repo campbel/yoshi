@@ -5,23 +5,24 @@ import (
 	"reflect"
 )
 
+// Link represents the order of commands for a given node tree
+// and argument list. example:
+// <app> foo bar baz
+// link(node=foo) ➜ link(node=bar) ➜ link(node=baz)
 type link struct {
-	name    string
-	self    reflect.Value
-	options reflect.Value
-	run     reflect.Value
-	error   error
-	next    *link
+	node *cmdNode
+	next *link
+	err  error
 }
 
 func (l *link) execute() {
 	// Check method first, field second
-	runMethod := l.self.MethodByName("Run")
-	runField := l.self.Elem().FieldByName("Run")
+	runMethod := l.node.cmdReference.MethodByName("Run")
+	runField := l.node.cmdReference.Elem().FieldByName("Run")
 	if runMethod.IsValid() && !runMethod.IsZero() {
-		runMethod.Call([]reflect.Value{l.options.Elem()})
+		runMethod.Call([]reflect.Value{l.node.optionsReference.Elem()})
 	} else if runField.IsValid() && !runField.IsZero() && !runField.IsNil() {
-		l.run.Elem().Call([]reflect.Value{l.options.Elem()})
+		l.node.runReference.Elem().Call([]reflect.Value{l.node.optionsReference.Elem()})
 	}
 	if l.next != nil {
 		l.next.execute()
@@ -30,22 +31,19 @@ func (l *link) execute() {
 
 func (l *link) help(usage ...string) string {
 	if l.next == nil {
-		return help(l.self.Elem().Type(), nil, append(usage, l.name)...)
+		return help(l.node.cmdReference.Elem().Type(), nil, append(usage, l.node.name)...)
 	}
-	return l.next.help(append(usage, l.name)...)
+	return l.next.help(append(usage, l.node.name)...)
 }
 
 func buildLinks(name string, node *cmdNode, args args) *link {
 	link := new(link)
-	link.name = name
-	link.self = node.cmdReference
-	link.run = node.runReference
-	link.options = node.optionsReference
+	link.node = node
 	for i, arg := range args {
 		if arg.command != "" {
 			command := node.commands.Get(arg.command)
 			if command == nil {
-				link.error = fmt.Errorf("unknown command %s", arg.command)
+				link.err = fmt.Errorf("unknown command %s", arg.command)
 				return link
 			}
 			link.next = buildLinks(arg.command, command, args[i+1:])
@@ -60,12 +58,12 @@ func buildLinks(name string, node *cmdNode, args args) *link {
 						}
 						setter, ok := setterMap[option.typ.Kind()]
 						if !ok {
-							link.error = fmt.Errorf("invalid type %s", option.typ.Kind().String())
+							link.err = fmt.Errorf("invalid type %s", option.typ.Kind().String())
 							return link
 						}
 						err := setter(option.val, arg.value)
 						if err != nil {
-							link.error = err
+							link.err = err
 							return link
 						}
 					}
