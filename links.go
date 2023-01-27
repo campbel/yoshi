@@ -6,21 +6,21 @@ import (
 )
 
 type link struct {
-	Name    string
-	Self    reflect.Value
-	Options reflect.Value
-	Run     reflect.Value
+	name    string
+	self    reflect.Value
+	options reflect.Value
+	run     reflect.Value
 	next    *link
 }
 
 func (l *link) execute() {
 	// Check method first, field second
-	runMethod := l.Self.MethodByName("Run")
-	runField := l.Self.Elem().FieldByName("Run")
+	runMethod := l.self.MethodByName("Run")
+	runField := l.self.Elem().FieldByName("Run")
 	if runMethod.IsValid() && !runMethod.IsZero() {
-		runMethod.Call([]reflect.Value{l.Options.Elem()})
+		runMethod.Call([]reflect.Value{l.options.Elem()})
 	} else if runField.IsValid() && !runField.IsZero() && !runField.IsNil() {
-		l.Run.Elem().Call([]reflect.Value{l.Options.Elem()})
+		l.run.Elem().Call([]reflect.Value{l.options.Elem()})
 	}
 	if l.next != nil {
 		l.next.execute()
@@ -29,17 +29,17 @@ func (l *link) execute() {
 
 func (l *link) help(usage ...string) string {
 	if l.next == nil {
-		return help(l.Self.Elem().Type(), nil, usage...)
+		return help(l.self.Elem().Type(), nil, usage...)
 	}
-	return l.next.help(append(usage, l.Name)...)
+	return l.next.help(append(usage, l.name)...)
 }
 
 func buildLinks(name string, node *Node, args args) *link {
 	link := new(link)
-	link.Name = name
-	link.Self = node.Value
-	link.Run = node.Run
-	link.Options = node.Opts
+	link.name = name
+	link.self = node.Value
+	link.run = node.Run
+	link.options = node.Opts
 	for i, arg := range args {
 		if arg.command != "" {
 			link.next = buildLinks(arg.command, node.Commands[arg.command], args[i+1:])
