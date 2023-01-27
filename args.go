@@ -4,15 +4,6 @@ import "strings"
 
 type args []*arg
 
-func (a args) firstCommand() *arg {
-	for _, arg := range a {
-		if arg.command != "" {
-			return arg
-		}
-	}
-	return nil
-}
-
 type arg struct {
 	command string
 	flag    string
