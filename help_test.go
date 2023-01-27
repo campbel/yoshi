@@ -16,7 +16,7 @@ Commands:
   email
   text
 Options:
-  -n string
+  -n string (default: smudge)
   -a string
 `)
 }
@@ -53,7 +53,7 @@ Options:
 
 func TestHelpErrors(t *testing.T) {
 	t.Run("unknown command", func(t *testing.T) {
-		testHelp(t, ctx, "trousers", "Usage: appy [options] COMMAND\nCommands:\n  call\n  email\n  text\nOptions:\n  -n string\n  -a string\n")
+		testHelp(t, ctx, "trousers", "Usage: appy [options] COMMAND\nCommands:\n  call\n  email\n  text\nOptions:\n  -n string (default: smudge)\n  -a string\n")
 	})
 	t.Run("unknown subcommand", func(t *testing.T) {
 		testHelp(t, ctx, "call trousers", "Usage: appy call [options] COMMAND\nCommands:\n  message\nOptions:\n  -n int The number to call\n")

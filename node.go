@@ -95,7 +95,7 @@ func (o cmdOption) validate(chain string) []error {
 			errs = append(errs, fmt.Errorf(`invalid type "%s" for %s.%s`, o.typ.Kind().String(), chain, o.field))
 		}
 		val := reflect.New(o.typ)
-		err := fn(val, o.def)
+		err := fn(val.Elem(), o.def)
 		if err != nil {
 			errs = append(errs, fmt.Errorf(`invalid default value "%s" for %s.%s`, o.def, chain, o.field))
 		}
@@ -113,6 +113,9 @@ func buildNodeOptions(val reflect.Value) []cmdOption {
 		option.def = field.Tag.Get(TagDefault)
 		option.typ = field.Type
 		option.val = val.Elem().FieldByName(field.Name)
+		if setter, ok := setterMap[option.typ.Kind()]; ok {
+			setter(option.val, option.def)
+		}
 		option.desc = field.Tag.Get(TagDescription)
 		options = append(options, option)
 	}

@@ -14,15 +14,36 @@ func TestApp(t *testing.T) {
 	}
 	assert.Equal("Usage: appy call message [options]\nOptions:\n  -t string The text to send\n", ctx.help("call", "-n", "123", "message", "-t", "hello, world"))
 	ctx.run("call", "-n", "123", "message", "-t", "hello, world")
-
 	if ctx.App.Call.callCount != 1 {
 		t.Errorf("Expected 1, got %d", ctx.App.Call.callCount)
+	}
+
+	address := ""
+	ctx.App.Email.Run = func(options struct {
+		Address string `yoshi-flag:"-a"`
+	}) {
+		address = options.Address
+	}
+	ctx.run("email", "-a", "foo@bar")
+	if address != "foo@bar" {
+		t.Errorf("Expected foo@bar, got %s", address)
+	}
+
+	ctx.App.Text.Run = func(options TextOptions) {
+		address = options.Number
+	}
+	ctx.run("text", "-n", "123")
+	if address != "123" {
+		t.Errorf("Expected 123, got %s", address)
+	}
+	if ctx.App.Options.Name != "smudge" {
+		t.Errorf("Expected smudge, got %s", ctx.App.Options.Name)
 	}
 }
 
 type TestYoshiApp struct {
 	Options struct {
-		Name    string `yoshi-flag:"-n"`
+		Name    string `yoshi-flag:"-n" yoshi-def:"smudge"`
 		Address string `yoshi-flag:"-a"`
 	}
 	Call  CallCommand
@@ -30,11 +51,13 @@ type TestYoshiApp struct {
 		Options struct {
 			Address string `yoshi-flag:"-a"`
 		}
+		Run func(options struct {
+			Address string `yoshi-flag:"-a"`
+		})
 	}
 	Text struct {
-		Options struct {
-			Number string `yoshi-flag:"-n"`
-		}
+		Options TextOptions
+		Run     func(options TextOptions)
 	}
 }
 
@@ -54,4 +77,8 @@ func (c *CallCommand) Run(options CallOptions) {
 
 type CallOptions struct {
 	Number int `yoshi-flag:"-n" yoshi-desc:"The number to call"`
+}
+
+type TextOptions struct {
+	Number string `yoshi-flag:"-n"`
 }
