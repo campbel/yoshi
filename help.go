@@ -46,11 +46,29 @@ func help(command reflect.Type, err error, usage ...string) string {
 			var buffer bytes.Buffer
 			w := tabwriter.NewWriter(&buffer, 0, 0, 1, ' ', 0)
 			for _, field := range fields {
+				line := ""
+				line += "\n"
+				// tag
+				tag := field.Tag.Get(TagFlag)
+				if tag != "" {
+					line += "  " + tag
+				}
+				// type
+				typ := field.Type.String()
+				if typ != "" {
+					line += "\t" + typ
+				}
+				// description
+				description := field.Tag.Get(TagDescription)
+				if description != "" {
+					line += "\t" + description
+				}
+				// default
 				defaultValue := field.Tag.Get(TagDefault)
 				if defaultValue != "" {
-					defaultValue = fmt.Sprintf(" (default: %s)", defaultValue)
+					line += fmt.Sprintf(" (default: %s)", defaultValue)
 				}
-				fmt.Fprintf(w, "\n  %s\t%s\t%s", field.Tag.Get(TagFlag), field.Type.String(), field.Tag.Get(TagDescription)+defaultValue)
+				fmt.Fprint(w, line)
 			}
 			w.Flush()
 			output += buffer.String() + "\n"
@@ -64,6 +82,9 @@ func getSubCommands(command reflect.Type) []string {
 	var subCommands []string
 	for _, field := range reflect.VisibleFields(command) {
 		if field.Name == "Options" || field.Name == "Run" {
+			continue
+		}
+		if field.Type.Kind() != reflect.Struct {
 			continue
 		}
 		subCommands = append(subCommands, field.Name)

@@ -10,6 +10,7 @@ type link struct {
 	self    reflect.Value
 	options reflect.Value
 	run     reflect.Value
+	error   error
 	next    *link
 }
 
@@ -29,7 +30,7 @@ func (l *link) execute() {
 
 func (l *link) help(usage ...string) string {
 	if l.next == nil {
-		return help(l.self.Elem().Type(), nil, usage...)
+		return help(l.self.Elem().Type(), nil, append(usage, l.name)...)
 	}
 	return l.next.help(append(usage, l.name)...)
 }
@@ -42,7 +43,12 @@ func buildLinks(name string, node *Node, args args) *link {
 	link.options = node.Opts
 	for i, arg := range args {
 		if arg.command != "" {
-			link.next = buildLinks(arg.command, node.Commands[arg.command], args[i+1:])
+			command, ok := node.Commands[arg.command]
+			if !ok {
+				link.error = fmt.Errorf("unknown command %s", arg.command)
+				return link
+			}
+			link.next = buildLinks(arg.command, command, args[i+1:])
 			return link
 		}
 		if arg.flag != "" {
@@ -54,11 +60,13 @@ func buildLinks(name string, node *Node, args args) *link {
 						}
 						setter, ok := setterMap[option.Type.Kind()]
 						if !ok {
-							panic(fmt.Errorf("invalid type %s", option.Type.Kind().String()))
+							link.error = fmt.Errorf("invalid type %s", option.Type.Kind().String())
+							return link
 						}
 						err := setter(option.Value, arg.value)
 						if err != nil {
-							panic(err)
+							link.error = err
+							return link
 						}
 					}
 				}
