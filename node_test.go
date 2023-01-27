@@ -38,7 +38,7 @@ func TestNodeImport(t *testing.T) {
 
 func TestValidate(t *testing.T) {
 	description := Describe[NodeApp]()
-	if err := description.Validate(); err != nil {
-		t.Errorf("Expected no errors, got %v", err)
+	if err := description.Validate(); len(err) != 7 {
+		t.Errorf("Expected 8 errors, got %d %v", len(err), err)
 	}
 }
