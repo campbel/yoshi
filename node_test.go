@@ -44,7 +44,7 @@ func TestNodeBuild(t *testing.T) {
 		node := buildNodes("root", reflect.ValueOf(&foo{}))
 		verifyNode(t, node,
 			1, 0, reflect.ValueOf(&foo{}).Type().String(), false, false)
-		verifyNode(t, node.commands["sub"],
+		verifyNode(t, node.commands.Get("sub"),
 			0, 0, reflect.ValueOf(&sub{}).Type().String(), false, false)
 	})
 	t.Run("multiple sub commands", func(t *testing.T) {
@@ -59,9 +59,9 @@ func TestNodeBuild(t *testing.T) {
 		node := buildNodes("root", reflect.ValueOf(&foo{}))
 		verifyNode(t, node,
 			2, 0, reflect.ValueOf(&foo{}).Type().String(), false, false)
-		verifyNode(t, node.commands["sub1"],
+		verifyNode(t, node.commands.Get("sub1"),
 			0, 0, reflect.ValueOf(&sub1{}).Type().String(), false, false)
-		verifyNode(t, node.commands["sub2"],
+		verifyNode(t, node.commands.Get("sub2"),
 			0, 0, reflect.ValueOf(&sub2{}).Type().String(), false, false)
 	})
 }
@@ -74,4 +74,15 @@ func verifyNode(t *testing.T, node *cmdNode, commandCount, optionsCount int, val
 	assert.Equal(t, valueType, node.cmdReference.Type().String())
 	assert.Equal(t, optsValid, node.optionsReference.IsValid())
 	assert.Equal(t, runValid, node.runReference.IsValid())
+}
+
+func TestCmdNodes(t *testing.T) {
+	t.Run("get", func(t *testing.T) {
+		nodes := cmdNodes{}
+		nodes = append(nodes, &cmdNode{name: "foo"})
+		nodes = append(nodes, &cmdNode{name: "bar"})
+		assert.Equal(t, "foo", nodes.Get("foo").name)
+		assert.Equal(t, "bar", nodes.Get("bar").name)
+		assert.Nil(t, nodes.Get("baz"))
+	})
 }

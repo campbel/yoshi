@@ -8,10 +8,6 @@ import (
 
 type cmdNodes []*cmdNode
 
-func (nodes cmdNodes) Append(node *cmdNode) cmdNodes {
-	return append(nodes, node)
-}
-
 func (nodes cmdNodes) Get(name string) *cmdNode {
 	for _, node := range nodes {
 		if node.name == name {
@@ -24,7 +20,7 @@ func (nodes cmdNodes) Get(name string) *cmdNode {
 type cmdNode struct {
 	name     string
 	options  []cmdOption
-	commands map[string]*cmdNode
+	commands cmdNodes
 
 	cmdReference     reflect.Value
 	runReference     reflect.Value
@@ -38,8 +34,8 @@ func (n cmdNode) validate(chain string) []error {
 			errs = append(errs, err...)
 		}
 	}
-	for command, node := range n.commands {
-		if err := node.validate(chain + "/" + command); err != nil {
+	for _, node := range n.commands {
+		if err := node.validate(chain + "/" + node.name); err != nil {
 			errs = append(errs, err...)
 		}
 	}
@@ -49,7 +45,7 @@ func (n cmdNode) validate(chain string) []error {
 func buildNodes(name string, val reflect.Value) *cmdNode {
 	var node cmdNode = cmdNode{
 		name:         name,
-		commands:     make(map[string]*cmdNode),
+		commands:     make(cmdNodes, 0),
 		cmdReference: val,
 	}
 	fields := reflect.VisibleFields(val.Elem().Type())
@@ -68,7 +64,7 @@ func buildNodes(name string, val reflect.Value) *cmdNode {
 			if structField.Kind() != reflect.Struct {
 				continue
 			}
-			node.commands[strings.ToLower(field.Name)] = buildNodes(strings.ToLower(field.Name), structField.Addr())
+			node.commands = append(node.commands, buildNodes(strings.ToLower(field.Name), structField.Addr()))
 		}
 	}
 	return &node

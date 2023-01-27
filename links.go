@@ -43,8 +43,8 @@ func buildLinks(name string, node *cmdNode, args args) *link {
 	link.options = node.optionsReference
 	for i, arg := range args {
 		if arg.command != "" {
-			command, ok := node.commands[arg.command]
-			if !ok {
+			command := node.commands.Get(arg.command)
+			if command == nil {
 				link.error = fmt.Errorf("unknown command %s", arg.command)
 				return link
 			}
