@@ -22,14 +22,6 @@ var setterMap = map[reflect.Kind]func(reflect.Value, string) error{
 		val.SetInt(int64(v))
 		return nil
 	},
-	reflect.Int64: func(val reflect.Value, s string) error {
-		v, err := strconv.Atoi(s)
-		if err != nil {
-			return err
-		}
-		val.SetInt(int64(v))
-		return nil
-	},
 	reflect.Bool: func(val reflect.Value, s string) error {
 		if s == "" {
 			s = "true"
@@ -45,16 +37,25 @@ var setterMap = map[reflect.Kind]func(reflect.Value, string) error{
 		if val.IsNil() {
 			val.Set(reflect.MakeSlice(val.Type(), 0, 0))
 		}
+		if s == "" {
+			return nil
+		}
 		parts := strings.Split(s, ",")
 		for _, part := range parts {
 			switch val.Type().Elem().Kind() {
 			case reflect.String:
 				val.Set(reflect.Append(val, reflect.ValueOf(part)))
 			case reflect.Int, reflect.Int64:
-				v, _ := strconv.Atoi(part)
+				v, err := strconv.Atoi(part)
+				if err != nil {
+					return err
+				}
 				val.Set(reflect.Append(val, reflect.ValueOf(v)))
 			case reflect.Bool:
-				v, _ := strconv.ParseBool(part)
+				v, err := strconv.ParseBool(part)
+				if err != nil {
+					return err
+				}
 				val.Set(reflect.Append(val, reflect.ValueOf(v)))
 			}
 		}
@@ -67,11 +68,14 @@ var setterMap = map[reflect.Kind]func(reflect.Value, string) error{
 		if val.IsNil() {
 			val.Set(reflect.MakeMap(val.Type()))
 		}
+		if s == "" {
+			return nil
+		}
 		parts := strings.Split(s, ",")
 		for _, part := range parts {
 			p := strings.Split(part, "=")
 			if len(p) != 2 {
-				continue
+				return errors.New("map value must be in the form key=value")
 			}
 			switch val.Type().Elem().Kind() {
 			case reflect.String:

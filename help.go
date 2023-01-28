@@ -78,10 +78,9 @@ func getFields(typ reflect.Type) ([]string, []string) {
 	var options []string
 	for _, field := range reflect.VisibleFields(typ) {
 		kind := field.Type.Kind()
-		if kind == reflect.Func || kind == reflect.Struct {
+		if kind == reflect.Func || (kind == reflect.Struct && !field.Anonymous) {
 			commands = append(commands, field.Name)
-		}
-		if setterMap[kind] != nil {
+		} else if setterMap[kind] != nil {
 			options = append(options, field.Name)
 		}
 	}

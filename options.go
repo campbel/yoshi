@@ -19,7 +19,7 @@ LOOP:
 		}
 		// we've reached a command, stop loading options
 		if parg.command != "" {
-			return nil
+			return fmt.Errorf("unknown command: %s", parg.command)
 		}
 		for _, field := range fields {
 			tags := strings.Split(field.Tag.Get(TagFlag), ",")

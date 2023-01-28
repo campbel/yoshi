@@ -130,3 +130,35 @@ func TestYoshiMultiFunction(t *testing.T) {
 		assert.Equal(t, "Error: unknown flag: -t\nUsage: test fetch [OPTIONS]\nOptions:\n  -u,--url    string\n  -s,--scheme string (default: https)\n", buffer.String())
 	})
 }
+
+func TestAnonymousFieldBehavior(t *testing.T) {
+	type Options struct {
+		Name string `yoshi:"-n,--name"`
+	}
+	type OtherOptions struct {
+		Options
+		OtherName string `yoshi:"-o,--other-name"`
+	}
+	type App struct {
+		Fetch func(options OtherOptions)
+	}
+
+	t.Run("happy path", func(t *testing.T) {
+		var buffer bytes.Buffer
+		err := yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer}).
+			Run(App{Fetch: func(options OtherOptions) {}},
+				"fetch", "--help")
+		assert.NoError(t, err)
+		assert.Equal(t, "Usage: test fetch [OPTIONS]\nOptions:\n  -n,--name       string\n  -o,--other-name string\n", buffer.String())
+	})
+
+	t.Run("unknown command", func(t *testing.T) {
+		var buffer bytes.Buffer
+		err := yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer}).
+			Run(App{Fetch: func(options OtherOptions) {}},
+				"fetch", "funch")
+		assert.Error(t, err)
+		assert.Equal(t, "Error: unknown command: funch\nUsage: test fetch [OPTIONS]\nOptions:\n  -n,--name       string\n  -o,--other-name string\n", buffer.String())
+	})
+
+}
