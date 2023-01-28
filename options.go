@@ -39,3 +39,22 @@ LOOP:
 
 	return nil
 }
+
+func defaults(v reflect.Value) error {
+	fields := reflect.VisibleFields(v.Elem().Type())
+	for _, field := range fields {
+		tag := field.Tag.Get(TagDefault)
+		if tag == "" {
+			continue
+		}
+		setter, ok := setterMap[field.Type.Kind()]
+		if !ok {
+			return fmt.Errorf("unsupported type: %s", field.Type.Kind())
+		}
+		val := v.Elem().FieldByName(field.Name)
+		if err := setter(val, tag); err != nil {
+			return err
+		}
+	}
+	return nil
+}

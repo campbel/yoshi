@@ -28,6 +28,7 @@ func TestYoshiMultiFunction(t *testing.T) {
 
 	type FetchOptions struct {
 		URL     string `yoshi:"-u,--url"`
+		Scheme  string `yoshi:"-s,--scheme" yoshi-default:"https"`
 		Ignored string
 	}
 	type PrintOptions struct {
@@ -51,6 +52,7 @@ func TestYoshiMultiFunction(t *testing.T) {
 				},
 			}, "fetch", "-u", "https://google.com")
 		assert.Equal(t, "https://google.com", out.URL)
+		assert.Equal(t, "https", out.Scheme)
 		assert.Equal(t, "", buffer.String())
 	})
 
@@ -99,6 +101,6 @@ func TestYoshiMultiFunction(t *testing.T) {
 				},
 			}, "fetch", "-t", "https://google.com")
 		assert.Empty(t, out.URL)
-		assert.Equal(t, "Error: unknown flag: -t\nUsage: test fetch [OPTIONS]\nOptions:\n  -u,--url string\n", buffer.String())
+		assert.Equal(t, "Error: unknown flag: -t\nUsage: test fetch [OPTIONS]\nOptions:\n  -u,--url    string\n  -s,--scheme string (default: https)\n", buffer.String())
 	})
 }

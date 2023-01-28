@@ -82,6 +82,9 @@ func (ctx *runContext) handleFunc(val reflect.Value, args ...string) error {
 			return fmt.Errorf("expected a struct, got %s", paramType.Kind())
 		}
 		param := reflect.New(paramType)
+		if err := defaults(param); err != nil {
+			return err
+		}
 		if err := options(param, args...); err != nil {
 			return runErr(paramType, err)
 		}

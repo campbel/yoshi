@@ -2,6 +2,6 @@ package yoshi
 
 const (
 	TagFlag        = "yoshi"
-	TagDescription = "yoshi-desc"
-	TagDefault     = "yoshi-def"
+	TagDescription = "yoshi-description"
+	TagDefault     = "yoshi-default"
 )
