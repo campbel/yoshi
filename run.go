@@ -123,5 +123,8 @@ func (ctx *runContext) handleStruct(val reflect.Value, args ...string) error {
 			return fmt.Errorf("expected a struct or function, got %s", fieldVal.Kind())
 		}
 	}
+	if args[0] == "--help" {
+		return userErr(val.Type(), errHelp)
+	}
 	return userErrf(val.Type(), "command not found: %s", args[0])
 }
