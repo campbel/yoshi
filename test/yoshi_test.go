@@ -27,7 +27,8 @@ func TestYoshiSingleFunction(t *testing.T) {
 func TestYoshiMultiFunction(t *testing.T) {
 
 	type FetchOptions struct {
-		URL string `yoshi:"-u,--url"`
+		URL     string `yoshi:"-u,--url"`
+		Ignored string
 	}
 	type PrintOptions struct {
 		Text string `yoshi:"-t,--text"`

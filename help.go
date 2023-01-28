@@ -44,13 +44,12 @@ func help(typ reflect.Type, err error, usage ...string) string {
 			if !ok {
 				panic("field not found: " + opt)
 			}
-			line := ""
-			line += "\n"
 			// tag
 			tag := field.Tag.Get(TagFlag)
-			if tag != "" {
-				line += "  " + tag
+			if tag == "" {
+				continue
 			}
+			line := "\n  " + tag
 			// type
 			typ := field.Type.String()
 			if typ != "" {
