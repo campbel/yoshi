@@ -1,6 +1,7 @@
 package yoshi
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 )
@@ -15,10 +16,12 @@ func (r *userError) Error() string {
 	return r.err.Error()
 }
 
-func runErr(loc reflect.Type, err error) *userError {
+func userErr(loc reflect.Type, err error) *userError {
 	return &userError{loc: loc, err: err}
 }
 
-func runErrf(loc reflect.Type, format string, args ...interface{}) *userError {
+func userErrf(loc reflect.Type, format string, args ...interface{}) *userError {
 	return &userError{loc: loc, err: fmt.Errorf(format, args...)}
 }
+
+var errHelp = errors.New("help")

@@ -14,6 +14,9 @@ func options(v reflect.Value, args ...string) error {
 	fields := reflect.VisibleFields(v.Elem().Type())
 LOOP:
 	for _, parg := range pargs {
+		if parg.flag == "--help" {
+			return errHelp
+		}
 		// we've reached a command, stop loading options
 		if parg.command != "" {
 			return nil

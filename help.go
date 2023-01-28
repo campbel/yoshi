@@ -11,7 +11,7 @@ import (
 func help(typ reflect.Type, err error, usage ...string) string {
 	commands, options := getFields(typ)
 	output := ""
-	if err != nil {
+	if err != nil && err != errHelp {
 		output += "Error: " + err.Error() + "\n"
 	}
 	// usage

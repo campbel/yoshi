@@ -86,7 +86,7 @@ func (ctx *runContext) handleFunc(val reflect.Value, args ...string) error {
 			return err
 		}
 		if err := options(param, args...); err != nil {
-			return runErr(paramType, err)
+			return userErr(paramType, err)
 		}
 		parameters = append(parameters, param.Elem())
 	}
@@ -120,5 +120,5 @@ func (ctx *runContext) handleStruct(val reflect.Value, args ...string) error {
 			return fmt.Errorf("expected a struct or function, got %s", fieldVal.Kind())
 		}
 	}
-	return runErrf(val.Type(), "command not found: %s", args[0])
+	return userErrf(val.Type(), "command not found: %s", args[0])
 }
