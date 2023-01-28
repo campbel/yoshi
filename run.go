@@ -10,20 +10,27 @@ import (
 )
 
 type Config struct {
-	Name       string
 	HelpWriter io.Writer
 }
 
+var defaultConfig = Config{HelpWriter: os.Stdout}
+
 type Yoshi struct {
+	name   string
 	config Config
 }
 
-func New(config Config) *Yoshi {
-	return &Yoshi{config: config}
+func New(name string) *Yoshi {
+	return &Yoshi{name: name, config: defaultConfig}
+}
+
+func (y *Yoshi) WithConfig(config Config) *Yoshi {
+	y.config = config
+	return y
 }
 
 func (y *Yoshi) Run(v any, args ...string) error {
-	ctx := newContext(y.config.Name)
+	ctx := newContext(y.name)
 	err := ctx.run(v, args...)
 	switch err := err.(type) {
 	case *userError:
@@ -34,7 +41,7 @@ func (y *Yoshi) Run(v any, args ...string) error {
 	}
 }
 
-var defaultContext = New(Config{Name: filepath.Base(os.Args[0]), HelpWriter: os.Stdout})
+var defaultContext = New(filepath.Base(os.Args[0]))
 
 func Run(v any, args ...string) error {
 	return defaultContext.Run(v, args...)

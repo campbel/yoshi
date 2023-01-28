@@ -33,7 +33,7 @@ type testApp struct {
 
 func TestYoshiObj(t *testing.T) {
 	var buffer bytes.Buffer
-	err := New(Config{"test", &buffer}).Run(testApp{
+	err := New("test").WithConfig(Config{&buffer}).Run(testApp{
 		Print: func(options PrintOptions) {
 			fmt.Println(options)
 		},

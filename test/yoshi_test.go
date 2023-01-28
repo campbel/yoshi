@@ -10,7 +10,7 @@ import (
 
 func TestYoshiSingleFunction(t *testing.T) {
 	var buffer bytes.Buffer
-	app := yoshi.New(yoshi.Config{Name: "test", HelpWriter: &buffer})
+	app := yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer})
 
 	type Options struct {
 		Name string `yoshi:"-n,--name"`
@@ -41,7 +41,7 @@ func TestYoshiMultiFunction(t *testing.T) {
 	t.Run("fetch", func(t *testing.T) {
 		var out FetchOptions
 		var buffer bytes.Buffer
-		yoshi.New(yoshi.Config{Name: "test", HelpWriter: &buffer}).
+		yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer}).
 			Run(App{
 				Fetch: func(options FetchOptions) {
 					out = options
@@ -57,7 +57,7 @@ func TestYoshiMultiFunction(t *testing.T) {
 	t.Run("print", func(t *testing.T) {
 		var out PrintOptions
 		var buffer bytes.Buffer
-		yoshi.New(yoshi.Config{Name: "test", HelpWriter: &buffer}).
+		yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer}).
 			Run(App{
 				Fetch: func(options FetchOptions) {
 					t.Fatal("Fetch should not be called")
@@ -73,7 +73,7 @@ func TestYoshiMultiFunction(t *testing.T) {
 	t.Run("funch", func(t *testing.T) {
 		var out FetchOptions
 		var buffer bytes.Buffer
-		yoshi.New(yoshi.Config{Name: "test", HelpWriter: &buffer}).
+		yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer}).
 			Run(App{
 				Fetch: func(options FetchOptions) {
 					out = options
@@ -89,7 +89,7 @@ func TestYoshiMultiFunction(t *testing.T) {
 	t.Run("bad flag", func(t *testing.T) {
 		var out FetchOptions
 		var buffer bytes.Buffer
-		yoshi.New(yoshi.Config{Name: "test", HelpWriter: &buffer}).
+		yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer}).
 			Run(App{
 				Fetch: func(options FetchOptions) {
 					out = options
