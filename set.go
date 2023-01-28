@@ -31,6 +31,9 @@ var setterMap = map[reflect.Kind]func(reflect.Value, string) error{
 		return nil
 	},
 	reflect.Bool: func(val reflect.Value, s string) error {
+		if s == "" {
+			s = "true"
+		}
 		v, err := strconv.ParseBool(s)
 		if err != nil {
 			return err

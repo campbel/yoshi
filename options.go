@@ -19,7 +19,7 @@ LOOP:
 			return nil
 		}
 		for _, field := range fields {
-			tags := strings.Split(field.Tag.Get("yoshi"), ",")
+			tags := strings.Split(field.Tag.Get(TagFlag), ",")
 			for _, tag := range tags {
 				if tag == parg.flag {
 					if setter, ok := setterMap[field.Type.Kind()]; ok {

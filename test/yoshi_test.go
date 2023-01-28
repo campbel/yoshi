@@ -32,7 +32,8 @@ func TestYoshiMultiFunction(t *testing.T) {
 		Ignored string
 	}
 	type PrintOptions struct {
-		Text string `yoshi:"-t,--text"`
+		Text      string `yoshi:"-t,--text"`
+		Lowercase bool   `yoshi:"-l,--lowercase"`
 	}
 	type App struct {
 		Fetch func(options FetchOptions)
@@ -69,6 +70,31 @@ func TestYoshiMultiFunction(t *testing.T) {
 				},
 			}, "print", "-t", "what is going on?")
 		assert.Equal(t, "what is going on?", out.Text)
+		assert.Equal(t, "", buffer.String())
+	})
+
+	t.Run("print lowercase", func(t *testing.T) {
+		var out PrintOptions
+		var buffer bytes.Buffer
+		app := App{
+			Fetch: func(options FetchOptions) {
+				t.Fatal("Fetch should not be called")
+			},
+			Print: func(options PrintOptions) {
+				out = options
+			},
+		}
+		yosh := yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer})
+
+		yosh.Run(app, "print", "-l", "-t", "what is going on?")
+		assert.Equal(t, "what is going on?", out.Text)
+		assert.Equal(t, true, out.Lowercase)
+		assert.Equal(t, "", buffer.String())
+
+		out = PrintOptions{}
+		yosh.Run(app, "print", "-l", "true", "-t", "who are you?")
+		assert.Equal(t, "who are you?", out.Text)
+		assert.Equal(t, true, out.Lowercase)
 		assert.Equal(t, "", buffer.String())
 	})
 
