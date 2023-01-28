@@ -29,6 +29,19 @@ type cmdNode struct {
 
 func (n cmdNode) validate(chain string) []error {
 	var errs []error
+
+	// Verify the Run field
+	cmdRun := n.cmdReference.Elem().FieldByName("Run")
+	if cmdRun.IsValid() && cmdRun.Kind() != reflect.Func {
+		errs = append(errs, fmt.Errorf("%s.Run should be a function", chain))
+	}
+
+	// Verify the Options field
+	cmdOptions := n.cmdReference.Elem().FieldByName("Options")
+	if cmdOptions.IsValid() && cmdOptions.Kind() != reflect.Struct {
+		errs = append(errs, fmt.Errorf("%s.Options should be a struct", chain))
+	}
+
 	for _, option := range n.options {
 		if err := option.validate(chain); err != nil {
 			errs = append(errs, err...)

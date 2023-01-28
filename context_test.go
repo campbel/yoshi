@@ -12,7 +12,7 @@ func TestApp(t *testing.T) {
 	if err := ctx.Validate(); len(err) != 4 {
 		t.Error(err)
 	}
-	assert.Equal("Usage: appy call message [options]\nOptions:\n  -t string The text to send\n", ctx.help("call", "-n", "123", "message", "-t", "hello, world"))
+	assert.Equal("Usage: appy call message [options]\nOptions:\n  -t string The text to send\n", ctx.Help("call", "-n", "123", "message", "-t", "hello, world"))
 	ctx.run("call", "-n", "123", "message", "-t", "hello, world")
 	if ctx.App.Call.callCount != 1 {
 		t.Errorf("Expected 1, got %d", ctx.App.Call.callCount)

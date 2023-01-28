@@ -22,7 +22,10 @@ func Create[T any](name string) *Context[T] {
 }
 
 func (a *Context[T]) Run(args ...string) {
-	a.run(os.Args[1:]...)
+	if len(args) == 0 {
+		args = os.Args
+	}
+	a.run(args[1:]...)
 }
 
 func (a *Context[T]) run(args ...string) {
@@ -34,9 +37,9 @@ func (a *Context[T]) Validate() []error {
 }
 
 func (a *Context[T]) PrintHelp() {
-	fmt.Println(a.help(os.Args[1:]...))
+	fmt.Println(a.Help(os.Args[1:]...))
 }
 
-func (a *Context[T]) help(args ...string) string {
+func (a *Context[T]) Help(args ...string) string {
 	return buildLinks(a.name, a.root, parseArgs(args)).help()
 }

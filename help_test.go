@@ -63,5 +63,5 @@ func TestHelpErrors(t *testing.T) {
 func testHelp[T any](t *testing.T, ctx *Context[T], args, out string) {
 	t.Helper()
 	assert := assert.New(t)
-	assert.Equal(out, ctx.help(strings.Split(args, " ")...))
+	assert.Equal(out, ctx.Help(strings.Split(args, " ")...))
 }
