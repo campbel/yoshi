@@ -35,6 +35,9 @@ func (y *Yoshi) Run(v any, args ...string) error {
 	switch err := err.(type) {
 	case *userError:
 		fmt.Fprint(y.config.HelpWriter, help(err.loc, err.err, ctx.chain...))
+		if err.err == errHelp {
+			return nil
+		}
 		return err.err
 	default:
 		return err
