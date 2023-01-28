@@ -20,7 +20,6 @@ func help(command reflect.Type, err error, usage ...string) string {
 		for _, cmd := range usage {
 			output += " " + strings.ToLower(cmd)
 		}
-		output += " [options]"
 		if len(subCommands) > 0 {
 			if _, hasRun := command.FieldByName("Run"); hasRun {
 				output += " [COMMAND]"
@@ -81,13 +80,10 @@ func help(command reflect.Type, err error, usage ...string) string {
 func getSubCommands(command reflect.Type) []string {
 	var subCommands []string
 	for _, field := range reflect.VisibleFields(command) {
-		if field.Name == "Options" || field.Name == "Run" {
-			continue
+		switch field.Type.Kind() {
+		case reflect.Func, reflect.Struct:
+			subCommands = append(subCommands, field.Name)
 		}
-		if field.Type.Kind() != reflect.Struct {
-			continue
-		}
-		subCommands = append(subCommands, field.Name)
 	}
 	return subCommands
 }
