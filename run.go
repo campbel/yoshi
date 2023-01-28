@@ -27,7 +27,7 @@ func (y *Yoshi) Run(v any, args ...string) error {
 	err := ctx.run(v, args...)
 	switch err := err.(type) {
 	case *userError:
-		fmt.Fprint(y.config.HelpWriter, help(err.cmd, err.err, ctx.chain...))
+		fmt.Fprint(y.config.HelpWriter, help(err.loc, err.err, ctx.chain...))
 		return err.err
 	default:
 		return err
@@ -101,10 +101,10 @@ func (ctx *runContext) handleStruct(val reflect.Value, args ...string) error {
 		fieldVal := val.FieldByName(field.Name)
 		switch fieldVal.Kind() {
 		case reflect.Struct:
-			ctx.chain = append(ctx.chain, field.Name)
+			ctx.chain = append(ctx.chain, strings.ToLower(field.Name))
 			return ctx.handleStruct(fieldVal, args[1:]...)
 		case reflect.Func:
-			ctx.chain = append(ctx.chain, field.Name)
+			ctx.chain = append(ctx.chain, strings.ToLower(field.Name))
 			return ctx.handleFunc(fieldVal, args[1:]...)
 		default:
 			return fmt.Errorf("expected a struct or function, got %s", fieldVal.Kind())

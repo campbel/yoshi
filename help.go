@@ -8,8 +8,8 @@ import (
 	"text/tabwriter"
 )
 
-func help(command reflect.Type, err error, usage ...string) string {
-	subCommands := getSubCommands(command)
+func help(typ reflect.Type, err error, usage ...string) string {
+	commands, options := getFields(typ)
 	output := ""
 	if err != nil {
 		output += "Error: " + err.Error() + "\n"
@@ -20,70 +20,71 @@ func help(command reflect.Type, err error, usage ...string) string {
 		for _, cmd := range usage {
 			output += " " + strings.ToLower(cmd)
 		}
-		if len(subCommands) > 0 {
-			if _, hasRun := command.FieldByName("Run"); hasRun {
-				output += " [COMMAND]"
-			} else {
-				output += " COMMAND"
-			}
+		if len(commands) > 0 {
+			output += " COMMAND"
+		} else {
+			output += " [OPTIONS]"
 		}
 		output += "\n"
 	}
 	// commands
-	if len(subCommands) > 0 {
+	if len(commands) > 0 {
 		output += "Commands:\n"
-		for _, cmd := range subCommands {
+		for _, cmd := range commands {
 			output += "  " + strings.ToLower(cmd) + "\n"
 		}
 	}
 	// options
-	field, ok := command.FieldByName("Options")
-	if ok {
-		fields := reflect.VisibleFields(field.Type)
-		if len(fields) > 0 {
-			output += "Options:"
-			var buffer bytes.Buffer
-			w := tabwriter.NewWriter(&buffer, 0, 0, 1, ' ', 0)
-			for _, field := range fields {
-				line := ""
-				line += "\n"
-				// tag
-				tag := field.Tag.Get(TagFlag)
-				if tag != "" {
-					line += "  " + tag
-				}
-				// type
-				typ := field.Type.String()
-				if typ != "" {
-					line += "\t" + typ
-				}
-				// description
-				description := field.Tag.Get(TagDescription)
-				if description != "" {
-					line += "\t" + description
-				}
-				// default
-				defaultValue := field.Tag.Get(TagDefault)
-				if defaultValue != "" {
-					line += fmt.Sprintf(" (default: %s)", defaultValue)
-				}
-				fmt.Fprint(w, line)
+	if len(options) > 0 {
+		output += "Options:"
+		var buffer bytes.Buffer
+		w := tabwriter.NewWriter(&buffer, 0, 0, 1, ' ', 0)
+		for _, opt := range options {
+			field, ok := typ.FieldByName(opt)
+			if !ok {
+				panic("field not found: " + opt)
 			}
-			w.Flush()
-			output += buffer.String() + "\n"
+			line := ""
+			line += "\n"
+			// tag
+			tag := field.Tag.Get(TagFlag)
+			if tag != "" {
+				line += "  " + tag
+			}
+			// type
+			typ := field.Type.String()
+			if typ != "" {
+				line += "\t" + typ
+			}
+			// description
+			description := field.Tag.Get(TagDescription)
+			if description != "" {
+				line += "\t" + description
+			}
+			// default
+			defaultValue := field.Tag.Get(TagDefault)
+			if defaultValue != "" {
+				line += fmt.Sprintf(" (default: %s)", defaultValue)
+			}
+			fmt.Fprint(w, line)
 		}
+		w.Flush()
+		output += buffer.String() + "\n"
 	}
-
 	return output
 }
 
-func getSubCommands(command reflect.Type) []string {
-	var subCommands []string
-	for _, field := range reflect.VisibleFields(command) {
-		switch field.Type.Kind() {
-		case reflect.Func, reflect.Struct:
-			subCommands = append(subCommands, field.Name)
+func getFields(typ reflect.Type) ([]string, []string) {
+	var commands []string
+	var options []string
+	for _, field := range reflect.VisibleFields(typ) {
+		kind := field.Type.Kind()
+		if kind == reflect.Func || kind == reflect.Struct {
+			commands = append(commands, field.Name)
+		}
+		if setterMap[kind] != nil {
+			options = append(options, field.Name)
 		}
 	}
-	return subCommands
+	return commands, options
 }

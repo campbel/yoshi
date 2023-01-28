@@ -1,6 +1,7 @@
 package yoshi
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -11,6 +12,7 @@ import (
 func options(v reflect.Value, args ...string) error {
 	pargs := parseArgs(args)
 	fields := reflect.VisibleFields(v.Elem().Type())
+LOOP:
 	for _, parg := range pargs {
 		// we've reached a command, stop loading options
 		if parg.command != "" {
@@ -25,10 +27,14 @@ func options(v reflect.Value, args ...string) error {
 						if err := setter(val, parg.value); err != nil {
 							return err
 						}
+						continue LOOP
+					} else {
+						return fmt.Errorf("unsupported type: %s", field.Type.Kind())
 					}
 				}
 			}
 		}
+		return fmt.Errorf("unknown flag: %s", parg.flag)
 	}
 
 	return nil
