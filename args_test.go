@@ -40,10 +40,20 @@ func TestParseArgs(t *testing.T) {
 				{flag: "-t", value: "hello, world"},
 			},
 		},
+		{
+			name: "trick bool parser",
+			args: []string{"message", "-t", "hello, world", "-b", "foobar"},
+			parsed: []arg{
+				{command: "message"},
+				{flag: "-t", value: "hello, world"},
+				{flag: "-b", value: "true"},
+				{command: "foobar"},
+			},
+		},
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			parsed := parseArgs(tc.args)
+			parsed := parseArgs(tc.args, "-b")
 			if len(parsed) != len(tc.parsed) {
 				t.Errorf("Expected %d args, got %d", len(tc.parsed), len(parsed))
 			}

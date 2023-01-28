@@ -10,7 +10,7 @@ import (
 // it looks for the yoshi tag in the struct fields and loads
 // the corresponding value from args
 func options(v reflect.Value, args ...string) error {
-	pargs := parseArgs(args)
+	pargs := parseArgs(args, getBooleanFlags(v)...)
 	fields := reflect.VisibleFields(v.Elem().Type())
 LOOP:
 	for _, parg := range pargs {
@@ -57,4 +57,15 @@ func defaults(v reflect.Value) error {
 		}
 	}
 	return nil
+}
+
+func getBooleanFlags(v reflect.Value) []string {
+	var flags []string
+	fields := reflect.VisibleFields(v.Elem().Type())
+	for _, field := range fields {
+		if field.Type.Kind() == reflect.Bool {
+			flags = append(flags, strings.Split(field.Tag.Get(TagFlag), ",")...)
+		}
+	}
+	return flags
 }
