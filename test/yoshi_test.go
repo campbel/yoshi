@@ -17,11 +17,15 @@ func TestYoshiSingleFunction(t *testing.T) {
 	}
 	var out Options
 
-	app.Run(func(options Options) {
+	assert.NoError(t, app.Run(func(options Options) {
 		out = options
-	}, "-n", "mario")
+	}, "-n", "mario"))
 
 	assert.Equal(t, "mario", out.Name)
+
+	assert.NoError(t, app.RunWithArgs(func(options Options) {
+		out = options
+	}))
 }
 
 func TestYoshiMultiFunction(t *testing.T) {
@@ -39,6 +43,23 @@ func TestYoshiMultiFunction(t *testing.T) {
 		Fetch func(options FetchOptions)
 		Print func(options PrintOptions)
 	}
+
+	t.Run("empty", func(t *testing.T) {
+		var out FetchOptions
+		var buffer bytes.Buffer
+		yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer}).
+			RunWithArgs(App{
+				Fetch: func(options FetchOptions) {
+					out = options
+				},
+				Print: func(options PrintOptions) {
+					t.Fatal("Print should not be called")
+				},
+			})
+		assert.Equal(t, "", out.URL)
+		assert.Equal(t, "", out.Scheme)
+		assert.Equal(t, "Usage: test COMMAND\nCommands:\n  fetch\n  print\n", buffer.String())
+	})
 
 	t.Run("fetch", func(t *testing.T) {
 		var out FetchOptions

@@ -30,6 +30,13 @@ func (y *Yoshi) WithConfig(config Config) *Yoshi {
 }
 
 func (y *Yoshi) Run(v any, args ...string) error {
+	if len(args) == 0 {
+		args = os.Args[1:]
+	}
+	return y.RunWithArgs(v, args...)
+}
+
+func (y *Yoshi) RunWithArgs(v any, args ...string) error {
 	ctx := newContext(y.name)
 	err := ctx.run(v, args...)
 	switch err := err.(type) {
@@ -59,9 +66,6 @@ func newContext(name string) *runContext {
 }
 
 func (ctx *runContext) run(v any, args ...string) error {
-	if len(args) == 0 {
-		args = os.Args[1:]
-	}
 	val := reflect.ValueOf(v)
 	switch val.Kind() {
 	case reflect.Func:
@@ -106,6 +110,12 @@ func (ctx *runContext) handleStruct(val reflect.Value, args ...string) error {
 	if val.Kind() != reflect.Struct {
 		return fmt.Errorf("expected a struct, got %s", val.Kind())
 	}
+	if len(args) == 0 {
+		return userErr(val.Type(), errHelp)
+	}
+	if args[0] == "--help" {
+		return userErr(val.Type(), errHelp)
+	}
 	fields := reflect.VisibleFields(val.Type())
 	for _, field := range fields {
 		if args[0] != strings.ToLower(field.Name) {
@@ -122,9 +132,6 @@ func (ctx *runContext) handleStruct(val reflect.Value, args ...string) error {
 		default:
 			return fmt.Errorf("expected a struct or function, got %s", fieldVal.Kind())
 		}
-	}
-	if args[0] == "--help" {
-		return userErr(val.Type(), errHelp)
 	}
 	return userErrf(val.Type(), "command not found: %s", args[0])
 }
