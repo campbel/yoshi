@@ -181,5 +181,4 @@ func TestAnonymousFieldBehavior(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, "Error: unknown command: funch\nUsage: test fetch [OPTIONS]\nOptions:\n  -n,--name       string\n  -o,--other-name string\n", buffer.String())
 	})
-
 }
