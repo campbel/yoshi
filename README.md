@@ -1,2 +1,2 @@
 # Yoshi
-Yoshi is a minimalist framework for creating rich CLI applications.
+Yoshi is a minimalist framework for command line applications.
