@@ -32,7 +32,7 @@ func TestYoshiMultiFunction(t *testing.T) {
 
 	type FetchOptions struct {
 		URL     string `yoshi:"-u,--url"`
-		Scheme  string `yoshi:"-s,--scheme" yoshi-default:"https"`
+		Scheme  string `yoshi:"-s,--scheme;;https"`
 		Ignored string
 	}
 	type PrintOptions struct {
@@ -180,5 +180,30 @@ func TestAnonymousFieldBehavior(t *testing.T) {
 				"fetch", "funch")
 		assert.Error(t, err)
 		assert.Equal(t, "Error: unknown command: funch\nUsage: test fetch [OPTIONS]\nOptions:\n  -n,--name       string\n  -o,--other-name string\n", buffer.String())
+	})
+}
+
+func TestOptionsForStructs(t *testing.T) {
+	type GlobalOptions struct {
+		Verbose bool `yoshi:"-v,--verbose"`
+	}
+
+	type FetchOptions struct {
+		URL string `yoshi:"-u,--url"`
+	}
+
+	type App struct {
+		Options GlobalOptions
+		Fetch   func(FetchOptions)
+	}
+
+	t.Run("happy path", func(t *testing.T) {
+		var buffer bytes.Buffer
+		err := yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer}).
+			Run(App{Fetch: func(options FetchOptions) {
+
+			}},
+				"fetch", "--url", "https://google.com")
+		assert.NoError(t, err)
 	})
 }

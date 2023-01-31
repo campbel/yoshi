@@ -45,23 +45,23 @@ func help(typ reflect.Type, err error, usage ...string) string {
 				panic("field not found: " + opt)
 			}
 			// tag
-			tag := field.Tag.Get(TagFlag)
-			if tag == "" {
+			tags := getTags(field).Flags
+			if len(tags) == 0 {
 				continue
 			}
-			line := "\n  " + tag
+			line := "\n  " + strings.Join(tags, ",")
 			// type
 			typ := field.Type.String()
 			if typ != "" {
 				line += "\t" + typ
 			}
 			// description
-			description := field.Tag.Get(TagDescription)
+			description := getTags(field).Description
 			if description != "" {
 				line += "\t" + description
 			}
 			// default
-			defaultValue := field.Tag.Get(TagDefault)
+			defaultValue := getTags(field).Default
 			if defaultValue != "" {
 				line += fmt.Sprintf(" (default: %s)", defaultValue)
 			}

@@ -3,7 +3,6 @@ package yoshi
 import (
 	"fmt"
 	"reflect"
-	"strings"
 )
 
 // options loads the values from arguments in the value v.
@@ -22,8 +21,8 @@ LOOP:
 			return fmt.Errorf("unknown command: %s", parg.command)
 		}
 		for _, field := range fields {
-			tags := strings.Split(field.Tag.Get(TagFlag), ",")
-			for _, tag := range tags {
+			flags := getTags(field).Flags
+			for _, tag := range flags {
 				if tag == parg.flag {
 					if setter, ok := setterMap[field.Type.Kind()]; ok {
 						val := v.Elem().FieldByName(field.Name)
@@ -46,7 +45,7 @@ LOOP:
 func defaults(v reflect.Value) error {
 	fields := reflect.VisibleFields(v.Elem().Type())
 	for _, field := range fields {
-		tag := field.Tag.Get(TagDefault)
+		tag := getTags(field).Default
 		if tag == "" {
 			continue
 		}
@@ -67,7 +66,7 @@ func getBooleanFlags(v reflect.Value) []string {
 	fields := reflect.VisibleFields(v.Elem().Type())
 	for _, field := range fields {
 		if field.Type.Kind() == reflect.Bool {
-			flags = append(flags, strings.Split(field.Tag.Get(TagFlag), ",")...)
+			flags = append(flags, getTags(field).Flags...)
 		}
 	}
 	return flags
