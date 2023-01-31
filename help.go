@@ -9,7 +9,7 @@ import (
 )
 
 func help(typ reflect.Type, err error, usage ...string) string {
-	commands, options := getFields(typ)
+	commands, positionals, options := getFields(typ)
 	output := ""
 	if err != nil && err != errHelp {
 		output += "Error: " + err.Error() + "\n"
@@ -20,9 +20,13 @@ func help(typ reflect.Type, err error, usage ...string) string {
 		for _, cmd := range usage {
 			output += " " + strings.ToLower(cmd)
 		}
+		for _, pos := range positionals {
+			output += " " + strings.ToUpper(pos)
+		}
 		if len(commands) > 0 {
 			output += " COMMAND"
-		} else {
+		}
+		if len(options) > 0 {
 			output += " [OPTIONS]"
 		}
 		output += "\n"
@@ -73,16 +77,25 @@ func help(typ reflect.Type, err error, usage ...string) string {
 	return output
 }
 
-func getFields(typ reflect.Type) ([]string, []string) {
+func getFields(typ reflect.Type) ([]string, []string, []string) {
 	var commands []string
+	var positionals []string
 	var options []string
 	for _, field := range reflect.VisibleFields(typ) {
 		kind := field.Type.Kind()
 		if kind == reflect.Func || (kind == reflect.Struct && !field.Anonymous) {
 			commands = append(commands, field.Name)
 		} else if setterMap[kind] != nil {
-			options = append(options, field.Name)
+			tags := getTags(field).Flags
+			if len(tags) == 0 {
+				continue
+			}
+			if tags[0][0] == '-' {
+				options = append(options, field.Name)
+			} else {
+				positionals = append(positionals, field.Name)
+			}
 		}
 	}
-	return commands, options
+	return commands, positionals, options
 }

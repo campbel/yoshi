@@ -10,36 +10,73 @@ import (
 // the corresponding value from args
 func options(v reflect.Value, args ...string) error {
 	pargs := parseArgs(args, getBooleanFlags(v)...)
-	fields := reflect.VisibleFields(v.Elem().Type())
-LOOP:
+	positionals, flags, err := parseOptions(v)
+	if err != nil {
+		return err
+	}
+	positionalIndex := 0
 	for _, parg := range pargs {
-		if parg.flag == "--help" {
+		if parg.key == "--help" {
 			return errHelp
 		}
-		// we've reached a command, stop loading options
-		if parg.command != "" {
-			return fmt.Errorf("unknown command: %s", parg.command)
-		}
-		for _, field := range fields {
-			flags := getTags(field).Flags
-			for _, tag := range flags {
-				if tag == parg.flag {
-					if setter, ok := setterMap[field.Type.Kind()]; ok {
-						val := v.Elem().FieldByName(field.Name)
-						if err := setter(val, parg.value); err != nil {
-							return err
-						}
-						continue LOOP
-					} else {
-						return fmt.Errorf("unsupported type: %s", field.Type.Kind())
-					}
+		if parg.key == "" {
+			if positionalIndex >= len(positionals) {
+				return fmt.Errorf("invalid argument: %s", parg.value)
+			}
+			fieldName := positionals[positionalIndex]
+			val := v.Elem().FieldByName(fieldName)
+			if setter, ok := setterMap[val.Kind()]; ok {
+				if err := setter(val, parg.value); err != nil {
+					return err
 				}
+			} else {
+				return fmt.Errorf("unsupported type: %s", val.Kind())
+			}
+			positionalIndex++
+			continue
+		}
+		if parg.key != "" {
+			if fieldName, ok := flags[parg.key]; ok {
+				val := v.Elem().FieldByName(fieldName)
+				if setter, ok := setterMap[val.Kind()]; ok {
+					if err := setter(val, parg.value); err != nil {
+						return err
+					}
+				} else {
+					return fmt.Errorf("unsupported type: %s", val.Kind())
+				}
+				continue
+			}
+			return fmt.Errorf("invalid flag: %s", parg.key)
+		}
+	}
+	return nil
+}
+
+func parseOptions(v reflect.Value) ([]string, map[string]string, error) {
+	positionals := make([]string, 0)
+	fields := reflect.VisibleFields(v.Elem().Type())
+	flagMap := make(map[string]string)
+	for _, field := range fields {
+		flags := getTags(field).Flags
+		for _, flag := range flags {
+			// Ignore empty flags
+			if flag == "" {
+				continue
+			}
+			if flag[0] == '-' {
+				// handle flag
+				if _, ok := flagMap[flag]; ok {
+					return nil, nil, fmt.Errorf("duplicate flag: %s", flag)
+				}
+				flagMap[flag] = field.Name
+			} else {
+				// handle positional
+				positionals = append(positionals, field.Name)
 			}
 		}
-		return fmt.Errorf("unknown flag: %s", parg.flag)
 	}
-
-	return nil
+	return positionals, flagMap, nil
 }
 
 func defaults(v reflect.Value) error {
