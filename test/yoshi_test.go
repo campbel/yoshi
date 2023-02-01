@@ -204,7 +204,7 @@ func TestPositionalArguments(t *testing.T) {
 		err := yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer}).
 			Run(func(options FetchOptions) {}, "--help")
 		assert.NoError(t, err)
-		assert.Equal(t, "Usage: test URL\n", buffer.String())
+		assert.Equal(t, "Usage: test FOO\nOptions:\n  FOO string\n", buffer.String())
 	})
 
 	t.Run("extra argument", func(t *testing.T) {

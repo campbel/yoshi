@@ -38,6 +38,10 @@ func (y *Yoshi) Run(v any, args ...string) error {
 func (y *Yoshi) RunWithArgs(v any, args ...string) error {
 	root := parser.NewTree(v, y.name)
 	node, leftOver := root.TryTraverse(args...)
+	if hasHelp(leftOver) {
+		fmt.Fprintln(y.config.HelpWriter, node.Help())
+		return nil
+	}
 	err := node.Run(leftOver...)
 	if err != nil {
 		fmt.Fprintln(y.config.HelpWriter, "error: "+err.Error())
@@ -45,4 +49,13 @@ func (y *Yoshi) RunWithArgs(v any, args ...string) error {
 		return err
 	}
 	return nil
+}
+
+func hasHelp(args []string) bool {
+	for _, arg := range args {
+		if arg == "-h" || arg == "--help" {
+			return true
+		}
+	}
+	return false
 }
