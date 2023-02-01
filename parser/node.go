@@ -8,11 +8,12 @@ import (
 	"text/tabwriter"
 
 	"github.com/campbel/yoshi/options"
+	"github.com/campbel/yoshi/types"
 )
 
 type Node struct {
 	path     []string
-	commands map[string]*Node
+	commands *types.OrderedMap[string, *Node]
 	run      reflect.Value
 }
 
@@ -20,7 +21,7 @@ func (n *Node) Exec(args ...string) error {
 	if len(args) == 0 {
 		return n.Run()
 	}
-	if node, ok := n.commands[args[0]]; ok {
+	if node, ok := n.commands.Get(args[0]); ok {
 		return node.Exec(args[1:]...)
 	}
 	return n.Run(args...)
@@ -58,7 +59,7 @@ func (n *Node) Help() string {
 
 	var help string
 	help += "Usage: " + strings.Join(n.path, " ")
-	if len(n.commands) > 0 {
+	if n.commands.Len() > 0 {
 		help += " COMMAND"
 	}
 	if len(opts) > 0 {
@@ -74,11 +75,11 @@ func (n *Node) Help() string {
 			help += " [OPTIONS]"
 		}
 	}
-	if len(n.commands) > 0 {
+	if n.commands.Len() > 0 {
 		help += "\nCommands:"
-		for name, _ := range n.commands {
-			help += "\n  " + name
-		}
+		n.commands.Each(func(key string, node *Node) {
+			help += "\n  " + key
+		})
 	}
 	if len(opts) > 0 {
 		help += "\nOptions:"
@@ -118,7 +119,7 @@ func parse(path []string, v reflect.Value) *Node {
 func parseFunc(path []string, v reflect.Value) *Node {
 	return &Node{
 		path:     path,
-		commands: make(map[string]*Node),
+		commands: types.NewOrderedMap[string, *Node](),
 		run:      v,
 	}
 }
@@ -126,11 +127,11 @@ func parseFunc(path []string, v reflect.Value) *Node {
 func parseStruct(path []string, v reflect.Value) *Node {
 	n := &Node{
 		path:     path,
-		commands: make(map[string]*Node),
+		commands: types.NewOrderedMap[string, *Node](),
 	}
 	for _, field := range reflect.VisibleFields(v.Type()) {
 		name := strings.ToLower(field.Name)
-		n.commands[name] = parse(append(path, name), v.FieldByName(field.Name))
+		n.commands.Set(name, parse(append(path, name), v.FieldByName(field.Name)))
 	}
 	return n
 }
@@ -139,7 +140,7 @@ func (n *Node) Traverse(path ...string) *Node {
 	if len(path) == 0 {
 		return n
 	}
-	node, ok := n.commands[path[0]]
+	node, ok := n.commands.Get(path[0])
 	if !ok {
 		return nil
 	}
@@ -150,7 +151,7 @@ func (n *Node) TryTraverse(path ...string) (*Node, []string) {
 	if len(path) == 0 {
 		return n, nil
 	}
-	node, ok := n.commands[path[0]]
+	node, ok := n.commands.Get(path[0])
 	if !ok {
 		return n, path
 	}
