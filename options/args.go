@@ -1,4 +1,4 @@
-package yoshi
+package options
 
 import "strings"
 

@@ -1,24 +1,44 @@
-package yoshi
+package options
 
 import (
 	"fmt"
 	"reflect"
 )
 
+func CreateFromArgs(ts []reflect.Type, args []string) ([]reflect.Value, error) {
+	var options []reflect.Value
+	for _, t := range ts {
+		val, err := createOption(t, args)
+		if err != nil {
+			return nil, err
+		}
+		options = append(options, val)
+	}
+	return options, nil
+}
+
+func createOption(t reflect.Type, args []string) (reflect.Value, error) {
+	v := reflect.New(t)
+	if err := defaults(v); err != nil {
+		return v, err
+	}
+	if err := options(v, args); err != nil {
+		return v, err
+	}
+	return v.Elem(), nil
+}
+
 // options loads the values from arguments in the value v.
 // it looks for the yoshi tag in the struct fields and loads
 // the corresponding value from args
-func options(v reflect.Value, args ...string) error {
-	pargs := parseArgs(args, getBooleanFlags(v)...)
+func options(v reflect.Value, args []string) error {
+	pargs := parseArgs(args)
 	positionals, flags, err := parseOptions(v)
 	if err != nil {
 		return err
 	}
 	positionalIndex := 0
 	for _, parg := range pargs {
-		if parg.key == "--help" {
-			return errHelp
-		}
 		if parg.key == "" {
 			if positionalIndex >= len(positionals) {
 				return fmt.Errorf("invalid argument: %s", parg.value)
@@ -58,7 +78,7 @@ func parseOptions(v reflect.Value) ([]string, map[string]string, error) {
 	fields := reflect.VisibleFields(v.Elem().Type())
 	flagMap := make(map[string]string)
 	for _, field := range fields {
-		flags := getTags(field).Flags
+		flags := parseOption(field).Flags
 		for _, flag := range flags {
 			// Ignore empty flags
 			if flag == "" {
@@ -82,7 +102,7 @@ func parseOptions(v reflect.Value) ([]string, map[string]string, error) {
 func defaults(v reflect.Value) error {
 	fields := reflect.VisibleFields(v.Elem().Type())
 	for _, field := range fields {
-		tag := getTags(field).Default
+		tag := parseOption(field).Default
 		if tag == "" {
 			continue
 		}
@@ -96,15 +116,4 @@ func defaults(v reflect.Value) error {
 		}
 	}
 	return nil
-}
-
-func getBooleanFlags(v reflect.Value) []string {
-	var flags []string
-	fields := reflect.VisibleFields(v.Elem().Type())
-	for _, field := range fields {
-		if field.Type.Kind() == reflect.Bool {
-			flags = append(flags, getTags(field).Flags...)
-		}
-	}
-	return flags
 }

@@ -58,7 +58,7 @@ func TestYoshiMultiFunction(t *testing.T) {
 			})
 		assert.Equal(t, "", out.URL)
 		assert.Equal(t, "", out.Scheme)
-		assert.Equal(t, "Usage: test COMMAND\nCommands:\n  fetch\n  print\n", buffer.String())
+		assert.Equal(t, "error: no command specified\nUsage: test COMMAND\nCommands:\n  fetch\n  print\n", buffer.String())
 	})
 
 	t.Run("fetch", func(t *testing.T) {
@@ -132,7 +132,7 @@ func TestYoshiMultiFunction(t *testing.T) {
 				},
 			}, "funch", "-u", "https://google.com")
 		assert.Empty(t, out.URL)
-		assert.Equal(t, "Error: command not found: funch\nUsage: test COMMAND\nCommands:\n  fetch\n  print\n", buffer.String())
+		assert.Equal(t, "error: command not found: funch\nUsage: test COMMAND\nCommands:\n  fetch\n  print\n", buffer.String())
 	})
 
 	t.Run("bad flag", func(t *testing.T) {
@@ -148,7 +148,7 @@ func TestYoshiMultiFunction(t *testing.T) {
 				},
 			}, "fetch", "-t", "https://google.com")
 		assert.Empty(t, out.URL)
-		assert.Equal(t, "Error: invalid flag: -t\nUsage: test fetch [OPTIONS]\nOptions:\n  -u,--url    string\n  -s,--scheme string (default: https)\n", buffer.String())
+		assert.Equal(t, "error: invalid flag: -t\nUsage: test fetch [OPTIONS]\nOptions:\n  -u, --url    string\n  -s, --scheme string (default: \"https\")\n", buffer.String())
 	})
 }
 
@@ -170,7 +170,7 @@ func TestAnonymousFieldBehavior(t *testing.T) {
 			Run(App{Fetch: func(options OtherOptions) {}},
 				"fetch", "--help")
 		assert.NoError(t, err)
-		assert.Equal(t, "Usage: test fetch [OPTIONS]\nOptions:\n  -n,--name       string\n  -o,--other-name string\n", buffer.String())
+		assert.Equal(t, "Usage: test fetch [OPTIONS]\nOptions:\n  -n, --name       string\n  -o, --other-name string\n", buffer.String())
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
@@ -179,7 +179,7 @@ func TestAnonymousFieldBehavior(t *testing.T) {
 			Run(App{Fetch: func(options OtherOptions) {}},
 				"fetch", "funch")
 		assert.Error(t, err)
-		assert.Equal(t, "Error: invalid argument: funch\nUsage: test fetch [OPTIONS]\nOptions:\n  -n,--name       string\n  -o,--other-name string\n", buffer.String())
+		assert.Equal(t, "error: invalid argument: funch\nUsage: test fetch [OPTIONS]\nOptions:\n  -n, --name       string\n  -o, --other-name string\n", buffer.String())
 	})
 }
 
@@ -215,6 +215,6 @@ func TestPositionalArguments(t *testing.T) {
 			},
 				"http://google.com", "http://yahoo.com")
 		assert.Error(t, err)
-		assert.Equal(t, "Error: invalid argument: http://yahoo.com\nUsage: test URL\n", buffer.String())
+		assert.Equal(t, "error: invalid argument: http://yahoo.com\nUsage: test FOO\nOptions:\n  FOO string\n", buffer.String())
 	})
 }
