@@ -102,7 +102,7 @@ func TestNewNode(t *testing.T) {
 	t.Run("fetch help", func(t *testing.T) {
 		assert := assert.New(t)
 		fetchNode := rootNode.Traverse("foo", "fetch")
-		expected := `Usage: foo fetch URL [options]
+		expected := `Usage: foo fetch URL [OPTIONS]
 Options:
   URL          string "URL to fetch"
   -m, --method string "HTTP request method" (default: "GET")`
