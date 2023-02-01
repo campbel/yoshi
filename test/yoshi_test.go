@@ -214,7 +214,7 @@ func TestPositionalArguments(t *testing.T) {
 				assert.Equal(t, "https://google.com", options.URL)
 			},
 				"http://google.com", "http://yahoo.com")
-		assert.NoError(t, err)
+		assert.Error(t, err)
 		assert.Equal(t, "Error: invalid argument: http://yahoo.com\nUsage: test URL\n", buffer.String())
 	})
 }
