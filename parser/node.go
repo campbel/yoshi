@@ -38,7 +38,12 @@ func (n *Node) Run(args ...string) error {
 	if err != nil {
 		return err
 	}
-	n.run.Call(params)
+	retVals := n.run.Call(params)
+	if len(retVals) > 0 {
+		if err, ok := retVals[0].Interface().(error); ok {
+			return err
+		}
+	}
 	return nil
 }
 

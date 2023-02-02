@@ -2,6 +2,7 @@ package test
 
 import (
 	"bytes"
+	"errors"
 	"testing"
 
 	"github.com/campbel/yoshi"
@@ -216,5 +217,48 @@ func TestPositionalArguments(t *testing.T) {
 				"http://google.com", "http://yahoo.com")
 		assert.Error(t, err)
 		assert.Equal(t, "error: invalid argument: http://yahoo.com\nUsage: test FOO\nOptions:\n  FOO string\n", buffer.String())
+	})
+
+	t.Run("missing argument", func(t *testing.T) {
+		var buffer bytes.Buffer
+		called := false
+		err := yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer}).
+			RunWithArgs(func(options FetchOptions) {
+				assert.Equal(t, "", options.URL)
+				called = true
+			})
+		assert.True(t, called)
+		assert.NoError(t, err)
+		assert.Equal(t, "", buffer.String())
+	})
+}
+
+func TestErrorReturn(t *testing.T) {
+	type FetchOptions struct {
+		URL string `yoshi:"FOO"`
+	}
+
+	t.Run("happy path", func(t *testing.T) {
+		var buffer bytes.Buffer
+		err := yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer}).
+			Run(func(options FetchOptions) error {
+				assert.Equal(t, "https://google.com", options.URL)
+				return nil
+			},
+				"https://google.com")
+		assert.NoError(t, err)
+	})
+
+	t.Run("error", func(t *testing.T) {
+		var buffer bytes.Buffer
+		err := yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer}).
+			Run(func(options FetchOptions) error {
+				assert.Equal(t, "https://google.com", options.URL)
+				return errors.New("something went wrong")
+			},
+				"https://google.com")
+		assert.Error(t, err)
+		assert.Equal(t, "something went wrong", err.Error())
+		assert.Equal(t, "error: something went wrong\nUsage: test FOO\nOptions:\n  FOO string\n", buffer.String())
 	})
 }
