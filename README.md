@@ -143,3 +143,47 @@ Usage: test [OPTIONS]
 Options:
   -n, --name string "Name of the person, required and must be capitalized"
 ```
+
+### [Yoshi <3 Cue](/examples/cue/main.go)
+
+There is no direct integration between Yoshi and Cue, but since we're working with Go structs, there is seamless cooperation between the two.
+
+1. Setup a simple Yoshi handler with options.
+
+    ```golang
+    type Options struct {
+      Value `yoshi:"-v"`
+    }
+
+    func main() {
+      yoshi.New("cue-example").Run(func(options Options) {
+        // implemented in step 3 below
+      })
+    }
+    ```
+
+1. Next, create a cue schema for the options type and load it as a cue value.
+
+    ```golang
+    const schema = `
+    Value != ""
+    `
+    ```
+
+1. Last, perform a cue validation as a first step in the handler
+
+    ```golang
+      yoshi.New("cue-example").Run(func(options Options) {
+        ctx := cuecontext.New()
+        val := ctx.CompileString(optionsSchema).Unify(ctx.Encode(options))
+        if err := val.Err(); err != nil {
+          return err
+        }
+        if err := val.Validate(); err != nil {
+          return err
+        }
+        // TODO implement functionality
+      })
+    ```
+
+This is the basic idea, but check out the example code for a more realistic implementation including a generic validation wrapper.
