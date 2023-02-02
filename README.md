@@ -85,7 +85,7 @@ type App struct {
 func main() {
   yoshi.New("typical").Run(App{
     Fetch: func(opts FetchOptions) {
-      // TODO fetch
+      // TODO
     },
     Serve: func(opts ServeOptions) {
       // TODO
