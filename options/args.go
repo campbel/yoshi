@@ -2,7 +2,7 @@ package options
 
 import "strings"
 
-type args []*arg
+type argList []*arg
 
 type arg struct {
 	key   string
@@ -16,8 +16,8 @@ type arg struct {
 // If the value is provided, then it must be either "true" or "false".
 // It is necessary to know which flags are boolean flags because the parser
 // needs to know whether to treat the next argument as a value or as a command.
-func parseArgs(arguments []string, boolFlags ...string) args {
-	var parsed args
+func parseArgs(arguments []string, boolFlags ...string) argList {
+	var parsed argList
 LOOP:
 	for i := 0; i < len(arguments); {
 		if !strings.HasPrefix(arguments[i], "-") {

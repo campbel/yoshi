@@ -262,3 +262,25 @@ func TestErrorReturn(t *testing.T) {
 		assert.Equal(t, "error: something went wrong\nUsage: test FOO\nOptions:\n  FOO string\n", buffer.String())
 	})
 }
+
+func TestNestedOptions(t *testing.T) {
+	type Options struct {
+		Date   string `yoshi:"-d,--date"`
+		Person struct {
+			Name string `yoshi:"-n,--name"`
+			Age  int    `yoshi:"-a,--age"`
+		}
+	}
+
+	t.Run("happy path", func(t *testing.T) {
+		var buffer bytes.Buffer
+		err := yoshi.New("test").WithConfig(yoshi.Config{HelpWriter: &buffer}).
+			Run(func(options Options) {
+				assert.Equal(t, "today", options.Date)
+				assert.Equal(t, "bob", options.Person.Name)
+				assert.Equal(t, 42, options.Person.Age)
+			},
+				"-d", "today", "-n", "bob", "-a", "42")
+		assert.NoError(t, err)
+	})
+}

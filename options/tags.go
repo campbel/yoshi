@@ -30,7 +30,7 @@ func GetOptions(typ reflect.Type) []Option {
 	for _, field := range reflect.VisibleFields(typ) {
 		kind := field.Type.Kind()
 		if setterMap[kind] != nil {
-			option := parseOption(field)
+			option := parseTags(field)
 			if len(option.Flags) > 0 {
 				options = append(options, option)
 			}
@@ -39,7 +39,7 @@ func GetOptions(typ reflect.Type) []Option {
 	return options
 }
 
-func parseOption(field reflect.StructField) Option {
+func parseTags(field reflect.StructField) Option {
 	option := Option{}
 	tag := field.Tag.Get(tagFlag)
 	if tag == "" {

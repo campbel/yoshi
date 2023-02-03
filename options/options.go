@@ -28,81 +28,16 @@ func createOption(t reflect.Type, args []string) (reflect.Value, error) {
 	return v.Elem(), nil
 }
 
-// options loads the values from arguments in the value v.
-// it looks for the yoshi tag in the struct fields and loads
-// the corresponding value from args
-func options(v reflect.Value, args []string) error {
-	pargs := parseArgs(args)
-	positionals, flags, err := parseOptions(v)
-	if err != nil {
-		return err
-	}
-	positionalIndex := 0
-	for _, parg := range pargs {
-		if parg.key == "" {
-			if positionalIndex >= len(positionals) {
-				return fmt.Errorf("invalid argument: %s", parg.value)
-			}
-			fieldName := positionals[positionalIndex]
-			val := v.Elem().FieldByName(fieldName)
-			if setter, ok := setterMap[val.Kind()]; ok {
-				if err := setter(val, parg.value); err != nil {
-					return err
-				}
-			} else {
-				return fmt.Errorf("unsupported type: %s", val.Kind())
-			}
-			positionalIndex++
-			continue
-		}
-		if parg.key != "" {
-			if fieldName, ok := flags[parg.key]; ok {
-				val := v.Elem().FieldByName(fieldName)
-				if setter, ok := setterMap[val.Kind()]; ok {
-					if err := setter(val, parg.value); err != nil {
-						return err
-					}
-				} else {
-					return fmt.Errorf("unsupported type: %s", val.Kind())
-				}
-				continue
-			}
-			return fmt.Errorf("invalid flag: %s", parg.key)
-		}
-	}
-	return nil
-}
-
-func parseOptions(v reflect.Value) ([]string, map[string]string, error) {
-	positionals := make([]string, 0)
-	fields := reflect.VisibleFields(v.Elem().Type())
-	flagMap := make(map[string]string)
-	for _, field := range fields {
-		flags := parseOption(field).Flags
-		for _, flag := range flags {
-			// Ignore empty flags
-			if flag == "" {
-				continue
-			}
-			if flag[0] == '-' {
-				// handle flag
-				if _, ok := flagMap[flag]; ok {
-					return nil, nil, fmt.Errorf("duplicate flag: %s", flag)
-				}
-				flagMap[flag] = field.Name
-			} else {
-				// handle positional
-				positionals = append(positionals, field.Name)
-			}
-		}
-	}
-	return positionals, flagMap, nil
-}
-
 func defaults(v reflect.Value) error {
 	fields := reflect.VisibleFields(v.Elem().Type())
 	for _, field := range fields {
-		tag := parseOption(field).Default
+		if field.Type.Kind() == reflect.Struct {
+			if err := defaults(v.Elem().FieldByName(field.Name).Addr()); err != nil {
+				return err
+			}
+			continue
+		}
+		tag := parseTags(field).Default
 		if tag == "" {
 			continue
 		}
@@ -115,5 +50,71 @@ func defaults(v reflect.Value) error {
 			return err
 		}
 	}
+	return nil
+}
+
+// options loads the values from arguments in the value v.
+// it looks for the yoshi tag in the struct fields and loads
+// the corresponding value from args
+func options(v reflect.Value, arguments []string) error {
+	type address struct {
+		v     reflect.Value
+		field string
+	}
+
+	set := func(a address, value string) error {
+		val := a.v.Elem().FieldByName(a.field)
+		if setter, ok := setterMap[val.Kind()]; ok {
+			if err := setter(val, value); err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("unsupported type: %s", val.Kind())
+		}
+		return nil
+	}
+
+	pos := make([]address, 0)
+	dict := make(map[string]address)
+	var lookup func(v reflect.Value)
+	lookup = func(v reflect.Value) {
+		for _, field := range reflect.VisibleFields(v.Elem().Type()) {
+			if field.Type.Kind() == reflect.Struct {
+				lookup(v.Elem().FieldByName(field.Name).Addr())
+				continue
+			}
+			option := parseTags(field)
+			if option.Positional() {
+				pos = append(pos, address{v, field.Name})
+				continue
+			}
+			for _, flag := range option.Flags {
+				dict[flag] = address{v, field.Name}
+			}
+		}
+	}
+	lookup(v)
+
+	positionalIndex := 0
+	for _, arg := range parseArgs(arguments) {
+		if arg.key == "" {
+			if positionalIndex >= len(pos) {
+				return fmt.Errorf("invalid argument: %s", arg.value)
+			}
+			if err := set(pos[positionalIndex], arg.value); err != nil {
+				return err
+			}
+			positionalIndex++
+			continue
+		}
+		if address, ok := dict[arg.key]; ok {
+			if err := set(address, arg.value); err != nil {
+				return err
+			}
+			continue
+		}
+		return fmt.Errorf("invalid flag: %s", arg.key)
+	}
+
 	return nil
 }
