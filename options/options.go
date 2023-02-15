@@ -3,6 +3,8 @@ package options
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/campbel/yoshi/setter"
 )
 
 func CreateFromArgs(ts []reflect.Type, args []string) ([]reflect.Value, error) {
@@ -41,12 +43,8 @@ func defaults(v reflect.Value) error {
 		if tag == "" {
 			continue
 		}
-		setter, ok := setterMap[field.Type.Kind()]
-		if !ok {
-			return fmt.Errorf("unsupported type: %s", field.Type.Kind())
-		}
 		val := v.Elem().FieldByName(field.Name)
-		if err := setter(val, tag); err != nil {
+		if err := setter.Set(val, tag); err != nil {
 			return err
 		}
 	}
@@ -71,14 +69,7 @@ func options(v reflect.Value, arguments []string) error {
 
 	set := func(a address, value string) error {
 		val := a.v.Elem().FieldByName(a.field)
-		if setter, ok := setterMap[val.Kind()]; ok {
-			if err := setter(val, value); err != nil {
-				return err
-			}
-		} else {
-			return fmt.Errorf("unsupported type: %s", val.Kind())
-		}
-		return nil
+		return setter.Set(val, value)
 	}
 
 	pos := make([]address, 0)

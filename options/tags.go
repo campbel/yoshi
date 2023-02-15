@@ -3,6 +3,8 @@ package options
 import (
 	"reflect"
 	"strings"
+
+	"github.com/campbel/yoshi/setter"
 )
 
 const (
@@ -28,8 +30,7 @@ func (o Option) Positional() bool {
 func GetOptions(typ reflect.Type) []Option {
 	var options []Option
 	for _, field := range reflect.VisibleFields(typ) {
-		kind := field.Type.Kind()
-		if setterMap[kind] != nil {
+		if setter.Supports(field.Type.Kind()) {
 			option := parseTags(field)
 			if len(option.Flags) > 0 {
 				options = append(options, option)

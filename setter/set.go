@@ -1,11 +1,51 @@
-package options
+package setter
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
+
+func Set(val reflect.Value, value string) error {
+	value, err := convertValue(val.Type(), value)
+	if err != nil {
+		return err
+	}
+	fn, ok := setterMap[val.Kind()]
+	if !ok {
+		return fmt.Errorf("unsupported type: %s", val.Kind())
+	}
+	return fn(val, value)
+}
+
+func Supports(kind reflect.Kind) bool {
+	_, ok := setterMap[kind]
+	return ok
+}
+
+func SetAny(target any, value string) error {
+	val := reflect.ValueOf(target)
+	if val.Kind() != reflect.Ptr {
+		return errors.New("target must be a pointer")
+	}
+	return Set(val.Elem(), value)
+}
+
+// convertValue converts a string representation of a value to the correct type.
+func convertValue(typ reflect.Type, value string) (string, error) {
+	switch typ.String() {
+	case "time.Duration":
+		d, err := time.ParseDuration(value)
+		if err != nil {
+			return "", err
+		}
+		return strconv.Itoa(int(d)), nil
+	}
+	return value, nil
+}
 
 // setterMap standardizes setting values from strings.
 // its important to have the same behavior for validation and execution.
@@ -20,6 +60,14 @@ var setterMap = map[reflect.Kind]func(reflect.Value, string) error{
 			return err
 		}
 		val.SetInt(int64(v))
+		return nil
+	},
+	reflect.Int64: func(val reflect.Value, s string) error {
+		v, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			return err
+		}
+		val.SetInt(v)
 		return nil
 	},
 	reflect.Bool: func(val reflect.Value, s string) error {
