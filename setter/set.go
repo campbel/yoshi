@@ -72,7 +72,7 @@ var setterMap = map[reflect.Kind]func(reflect.Value, string) error{
 	},
 	reflect.Bool: func(val reflect.Value, s string) error {
 		if s == "" {
-			s = "true"
+			s = "false"
 		}
 		v, err := strconv.ParseBool(s)
 		if err != nil {
