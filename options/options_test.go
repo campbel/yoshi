@@ -77,3 +77,11 @@ func TestMultiplePositionals(t *testing.T) {
 	assert.Equal("123 main st", opts.Address.Street)
 	assert.Equal("new york", opts.Address.City)
 }
+
+func TestInvalidParamTypes(t *testing.T) {
+	var opts string
+	assert.Error(t, options(reflect.ValueOf(&opts), []string{}))
+
+	type Options struct{}
+	assert.Error(t, options(reflect.ValueOf(Options{}), []string{}))
+}

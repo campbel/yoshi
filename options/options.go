@@ -57,6 +57,13 @@ func defaults(v reflect.Value) error {
 // it looks for the yoshi tag in the struct fields and loads
 // the corresponding value from args
 func options(v reflect.Value, arguments []string) error {
+	if v.Kind() != reflect.Ptr {
+		return fmt.Errorf("options: expected pointer to struct, got %s", v.Kind())
+	}
+	if v.Elem().Kind() != reflect.Struct {
+		return fmt.Errorf("options: expected pointer to struct, got pointer to %s", v.Elem().Kind())
+	}
+
 	type address struct {
 		v     reflect.Value
 		field string
