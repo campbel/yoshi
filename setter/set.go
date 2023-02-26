@@ -70,6 +70,14 @@ var setterMap = map[reflect.Kind]func(reflect.Value, string) error{
 		val.SetInt(v)
 		return nil
 	},
+	reflect.Float64: func(val reflect.Value, s string) error {
+		v, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return err
+		}
+		val.SetFloat(v)
+		return nil
+	},
 	reflect.Bool: func(val reflect.Value, s string) error {
 		if s == "" {
 			s = "true"
@@ -95,6 +103,12 @@ var setterMap = map[reflect.Kind]func(reflect.Value, string) error{
 				val.Set(reflect.Append(val, reflect.ValueOf(part)))
 			case reflect.Int, reflect.Int64:
 				v, err := strconv.Atoi(part)
+				if err != nil {
+					return err
+				}
+				val.Set(reflect.Append(val, reflect.ValueOf(v)))
+			case reflect.Float64:
+				v, err := strconv.ParseFloat(part, 64)
 				if err != nil {
 					return err
 				}
@@ -130,6 +144,12 @@ var setterMap = map[reflect.Kind]func(reflect.Value, string) error{
 				val.SetMapIndex(reflect.ValueOf(p[0]), reflect.ValueOf(p[1]))
 			case reflect.Int, reflect.Int64:
 				v, err := strconv.Atoi(p[1])
+				if err != nil {
+					return err
+				}
+				val.SetMapIndex(reflect.ValueOf(p[0]), reflect.ValueOf(v))
+			case reflect.Float64:
+				v, err := strconv.ParseFloat(p[1], 64)
 				if err != nil {
 					return err
 				}
